@@ -1,0 +1,3364 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Loan Admin</title>
+ 
+<style>
+
+/* ===========================================
+   THEME VARIABLES — MATCH EXACTLY WITH ROI
+   =========================================== */
+
+html {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --border: #1e293b;
+  --input-bg: #020617;
+  --input-border: #334155;
+  --shadow: 0 18px 40px rgba(0,0,0,0.4);
+  --button-bg: #1e293b;
+  --button-border: #334155;
+  --delete-bg: #111827;
+  --delete-border: #374151;
+  --green: #22c55e;
+}
+
+html[data-theme="light"] {
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --text: #0f172a;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --input-bg: #ffffff;
+  --input-border: #cbd5e1;
+  --shadow: 0 1px 4px rgba(0,0,0,0.08);
+  --button-bg: #ffffff;
+  --button-border: #cbd5e1;
+  --delete-bg: #f1f5f9;
+  --delete-border: #cbd5e1;
+  --green: #16a34a;
+}
+
+/* Smooth theme transition */
+body, table, th, td, input, select, button {
+  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+/* ===========================================
+   GLOBAL LAYOUT
+   =========================================== */
+
+body {
+  margin: 0;
+  padding: 1.5rem;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Titles */
+h1 {
+  margin: 0 0 0.3rem 0;
+  font-size: 1.45rem;
+}
+
+/* ===========================================
+   HEADER LAYOUT (match ROI behavior)
+   =========================================== */
+
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 1.4rem;
+}
+
+.header-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.header-right {
+  display: flex;
+  flex-shrink: 0;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+  
+.sub {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-bottom: 1.2rem;
+}
+
+/* ===========================================
+   BUTTONS
+   =========================================== */
+
+button {
+  border-radius: 999px;
+  border: 1px solid var(--button-border);
+  padding: 0.35rem 0.9rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-weight: 500;
+  background: var(--button-bg);
+  color: var(--text);
+}
+
+button:hover {
+  opacity: 0.8;
+}
+
+/* Add Loan (green pill) */
+#add-row {
+  background: var(--green);
+  border-color: var(--green);
+  color: #ffffff;
+}
+
+/* Save button */
+#save-btn {
+  background: var(--button-bg);
+  border-color: var(--button-border);
+}
+
+/* Delete button — small, dark, not red */
+.delete-btn {
+  background: var(--delete-bg) !important;
+  border: 1px solid var(--delete-border) !important;
+  color: var(--text) !important;
+  font-size: 0.75rem !important;
+  padding: 0.22rem 0.6rem !important;
+  border-radius: 0.35rem !important;
+}
+
+/* ===========================================
+   Events button highlight
+   =========================================== */
+.events-btn {
+  position: relative;
+}
+
+.events-btn.has-events {
+  border-color: var(--green);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--green) 40%, transparent);
+}
+
+.events-btn.has-default {
+  border-color: #ef4444;
+  color: #fecaca;
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.45);
+}
+
+/* small dot indicator */
+.events-btn.has-events::after {
+  content: "";
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 8px;
+  height: 8px;
+  background: var(--green);
+  border-radius: 50%;
+}
+
+.events-btn.has-default::after {
+  background: #ef4444;
+}
+
+  
+/* ===========================================
+   STATUS PILL (matches ROI)
+   =========================================== */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.pill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--green);
+}
+
+/* ===========================================
+   TABLE (matches ROI card/table style)
+   =========================================== */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow);
+  font-size: 0.78rem;
+}
+
+thead {
+  background: var(--card);
+}
+
+th, td {
+  padding: 0.45rem 0.55rem;
+  border-bottom: 1px solid var(--border);
+}
+
+th,
+td {
+  vertical-align: middle;
+}
+
+td.actions,
+th[colspan="2"] {
+  text-align: center;
+}
+  
+th {
+  color: var(--muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+th.sortable {
+  cursor: pointer;
+}
+
+th.sortable:hover {
+  color: var(--text);
+}
+
+tbody tr:hover {
+  background: color-mix(in srgb, var(--card) 90%, var(--text) 10%);
+}
+
+/* ===========================================
+   STICKY TABLE HEADER
+   =========================================== */
+
+#loan-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+
+  /* Ensure header stays visually solid while scrolling */
+  background: var(--card);
+  box-shadow: 0 1px 0 var(--border);
+}
+
+  
+/* ===========================================
+   INPUTS + SELECTS
+   =========================================== */
+
+.ownership-pill {
+  width: 100%;
+  text-align: left;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+
+.ownership-pill:hover {
+  background: #eef2ff;
+  border-color: #6366f1;
+}
+
+.ownership-pill:active {
+  transform: translateY(1px);
+}
+  
+input, select {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 0.45rem;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--text);
+  padding: 0.25rem 0.3rem;
+  font-size: 0.78rem;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--green);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--green) 40%, transparent);
+}
+
+/* Column widths */
+.cell-id { max-width: 50px; }
+.cell-number { max-width: 100px; }
+.cell-date { max-width: 130px; }
+.cell-school { min-width: 140px; }
+.cell-name { min-width: 150px; }
+
+  /* Tight numeric columns */
+.col-money,
+.col-rate,
+.col-years {
+  width: 1%;
+  white-space: nowrap;
+}
+
+/* Make inputs shrink to content */
+.col-money input,
+.col-rate input,
+.col-years input {
+  width: 100%;
+  min-width: 72px;
+  text-align: right;
+}
+
+/* Actions column gets priority space */
+.col-actions {
+  white-space: nowrap;
+  width: 1%;
+}
+
+  #feedback-btn {
+  position: fixed;
+  bottom: 18px;
+  right: 18px;
+  z-index: 9999;
+
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  font-size: 20px;
+}
+
+#feedback-btn:hover {
+  transform: scale(1.05);
+}
+
+  .user-guide-btn {
+  border: 1px solid var(--brand);
+  background: white;
+  color: var(--brand);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 12px;
+}
+
+.user-guide-btn:hover {
+  background: var(--brand);
+  color: white;
+}
+
+.guide-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  z-index: 90;
+}
+
+.guide-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 420px;
+  height: 100%;
+  background: white;
+  box-shadow: -20px 0 40px rgba(0,0,0,0.15);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+.guide-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.guide-header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.guide-header button {
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.guide-content {
+  padding: 20px;
+  overflow-y: auto;
+  line-height: 1.6;
+}
+
+.hidden {
+  display: none;
+}
+
+.col-metric {
+  text-align: right;
+  font-weight: 500;
+}
+
+
+/* Risk/Value Drawer Styles */
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 600px;
+  background: var(--card);
+  box-shadow: -8px 0 24px rgba(0,0,0,0.25);
+  z-index: 1000;
+  overflow-y: auto;
+}
+
+  .drawer.hidden { display: none; }
+
+.drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: var(--muted);
+}
+
+  .drawer-content { padding: 20px; }
+
+.drawer-actions {
+  margin-top: 32px;
+  text-align: right;
+}
+
+  
+/* Shrink inputs */
+.control-group input {
+  max-width: 150px;
+  width: 100%; /* still responsive */
+}
+
+/* Row formatting - ensure help-text below */
+.control-group label { 
+  display: block; 
+  margin-bottom: 4px; 
+}
+.control-group input { 
+  margin-bottom: 8px; 
+}
+.control-group .help-text { 
+  display: block; 
+  margin-bottom: 16px; /* space between fields */
+}
+  
+/* Intro and section text */
+.intro-text, .section-intro {
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 16px;
+  color: var(--muted);
+}
+
+.section-intro { margin-top: -8px; } /* closer to h3 */
+
+.primary-btn {
+  background: var(--green);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+  .original-note {
+  font-size: 0.875rem;
+  color: var(--muted);
+  margin-top: 0.25rem;
+  font-style: italic;
+  line-height: 1.4;
+}
+  
+</style>
+
+
+</head>
+
+<body>
+
+<datalist id="school-datalist"></datalist>
+  
+<!-- =========================================================
+     HEADER
+     ========================================================= -->
+<div class="header-row">
+  <div class="header-left">
+    <h1>Loan Admin</h1>
+    <p>Edit the loans that power the ROI, Earnings, and Amort pages</p>
+  </div>
+
+  <div class="header-right">
+    <!-- NAVIGATION BUTTON -->
+<button id="userGuideBtn" class="user-guide-btn">
+  📘 User Guide
+</button>
+    
+<button id="port-btn">
+  📊 MY HOLDINGS
+</button>
+<select id="admin-user-select" style="padding: 0.35rem 0.7rem; border-radius: 999px; border: 1px solid var(--button-border); background: var(--button-bg); color: var(--text); font-size: 0.8rem;">
+  <option value="jeff" selected>Jeff Customer</option>
+  <option value="nick">Nick Lender</option>
+  <option value="john">John Investor</option>
+</select>
+
+
+
+    <!-- THEME TOGGLE -->
+    <button id="themeToggle" class="toggle-btn">🌙</button>
+  </div>
+</div>
+
+<!-- STATUS -->
+<div id="status" class="pill">Idle</div>
+
+<!-- =========================================================
+     TOP BUTTONS (ADD ROW + SAVE)
+     ========================================================= -->
+<div style="margin: 16px 0; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+  <!-- Left: Save area -->
+  <div style="display: flex; align-items: center; gap: 12px;">
+    <button id="save-btn">💾 Save Changes</button>
+    <span id="save-indicator" style="display:none; color: var(--green); font-size: 0.9rem; font-weight: 500;">Saved!</span>
+  </div>
+
+  <!-- Right: Action buttons -->
+  <div style="display: flex; align-items: center; gap: 10px;">
+    <button id="add-row">+ Add Loan</button>
+    <button id="import-csv-btn" style="background:#3b82f6; color:white; border:none;">📥 Import CSV</button>
+    <input type="file" id="csv-file-input" accept=".csv" style="display:none;">
+    
+    <button id="fee-management-btn" style="background: #6366f1; border-color: #6366f1; color: white;">
+      User/Fee Management
+    </button>
+    <button id="openRiskValueBtn" style="background: #FFA500; border-color: #FFA500; color: white;">
+      Risk & Value Controls
+    </button>
+  </div>
+
+<div
+  id="unsaved-warning"
+  style="
+    display:none;
+    margin-top:6px;
+    font-size:0.8rem;
+    color:#b91c1c;
+  "
+>
+  ⚠️ You have unsaved changes — click <strong>Save Changes</strong> to apply them
+</div>
+
+  
+<!-- =========================================================
+     TABLE
+     ========================================================= -->
+<table id="loan-table">
+<thead>
+  <tr>
+    <th data-field="loanId" class="sortable">Loan ID</th>
+    <th data-field="loanName" class="sortable">Loan Name</th>
+    <th>Borrower</th>
+    <th>Ownership</th>
+    <th data-field="school" class="sortable">School</th>
+    <th data-field="loanStartDate" class="sortable">Loan Start Date</th>
+    <th data-field="principal" class="sortable col-money">Orig Loan Amt</th>
+    <th data-field="nominalRate" class="sortable col-rate">Rate</th>
+    <th data-field="termYears" class="sortable col-years">Term (yrs)</th>
+    <th data-field="graceYears" class="sortable col-years">Grace (yrs)</th>
+    <th data-field="loanStatus" class="sortable">Status</th>
+    <th>Waive Fees</th>
+    <th colspan="3" style="text-align:center">Actions</th>
+  </tr>
+</thead>
+  <tbody id="loan-table-body"></tbody>
+</table>
+
+
+<!-- Risk & Value Controls Drawer -->
+<div id="riskValueDrawer" class="drawer hidden">
+  <div class="drawer-header">
+    <h2>Risk & Valuation Controls</h2>
+    <button id="closeRiskValueBtn" class="close-btn">×</button>
+  </div>
+
+  <div class="drawer-content">
+    <p class="intro-text">
+      These inputs serve as the system of record for platform-wide risk and valuation assumptions. Any updates here will apply globally to all loan calculations, affecting ROI, earnings, amortization, and valuation outputs across all users.
+    </p>
+
+    <!-- Risk Premiums -->
+    <div class="control-group">
+      <h3>Risk Premiums (bps added to discount rate)</h3>
+      <p class="section-intro">
+        These premiums adjust the discount rate based on borrower risk tier, increasing it for higher risk to reflect uncertainty. Raising premiums makes valuations more conservative, lowering NPV and IRR; lowering them increases perceived value but may underestimate risk.
+      </p>
+      <label>Risk Premium (LOW) bps</label>
+      <input type="number" id="risk-premium-low" min="0" max="1500" step="10" />
+      <p class="original-note">Original: 250 bps (Source: Moody's Student Loan ABS Methodology). Extra discount for LOW-risk; higher lowers NPV for high-quality loans.</p>
+
+      <label>Risk Premium (MEDIUM) bps</label>
+      <input type="number" id="risk-premium-medium" min="0" max="1500" step="10" />
+      <p class="original-note">Original: 350 bps (Source: S&P Private Student Loan Benchmarks). For MEDIUM-risk; impacts portfolio NPV most.</p>
+
+      <label>Risk Premium (HIGH) bps</label>
+      <input type="number" id="risk-premium-high" min="0" max="1500" step="10" />
+      <p class="original-note">Original: 550 bps (Source: CFPB Private Student Loan Reports). For HIGH-risk; quickly reduces value of marginal loans.</p>
+
+      <label>Risk Premium (VERY HIGH) bps</label>
+      <input type="number" id="risk-premium-very-high" min="0" max="1500" step="10" />
+      <p class="original-note">Original: 750 bps (Source: Navient ABS Disclosures). For VERY HIGH-risk; heavily penalizes subprime.</p>
+    </div>
+
+    <!-- Recovery Rates -->
+    <div class="control-group">
+      <h3>Recovery Rates (after default)</h3>
+      <p class="section-intro">
+        Recovery rates estimate the percentage of outstanding principal recovered post-default. Higher rates reduce expected losses, increasing NPV; lower rates amplify loss impact, decreasing value especially for higher-risk tiers.
+      </p>
+      <label>Recovery Rate (LOW) %</label>
+      <input type="number" id="recovery-rate-low" min="0" max="100" step="1" />
+      <p class="original-note">Original: 30% (Source: Moody's Ultimate Recovery Database). For LOW-risk; lower increases expected loss.</p>
+
+      <label>Recovery Rate (MEDIUM) %</label>
+      <input type="number" id="recovery-rate-medium" min="0" max="100" step="1" />
+      <p class="original-note">Original: 22% (Source: S&P Loss Severity Ratings). For MEDIUM; biggest impact on average losses.</p>
+
+      <label>Recovery Rate (HIGH) %</label>
+      <input type="number" id="recovery-rate-high" min="0" max="100" step="1" />
+      <p class="original-note">Original: 15% (Source: ABS Loss Severity Disclosures). For HIGH-risk; amplifies loss impact on NPV.</p>
+
+      <label>Recovery Rate (VERY HIGH) %</label>
+      <input type="number" id="recovery-rate-very-high" min="0" max="100" step="1" />
+      <p class="original-note">Original: 10% (Source: Moody's Recovery Assumptions). For VERY HIGH-risk; severely decreases value.</p>
+    </div>
+
+    <!-- Prepayment & Duration -->
+   <div class="control-group">
+  <h3>Prepayment & Duration Assumptions</h3>
+  <p class="section-intro">
+    These control expected loan payoff speed. Higher multipliers/seasoning shorten duration, returning principal faster but potentially reducing interest income and NPV; lower values extend loans, increasing yield but exposure to default risk.
+  </p>
+  
+  <div class="input-group">
+    <label for="prepayment-multiplier">Prepayment Multiplier</label>
+    <input type="number" id="prepayment-multiplier" min="0.1" max="3" step="0.1" value="1.0" />
+    <p class="original-note">Original: 1.0 (Source: ABS Prepayment Disclosures). Adjusts base CPR curve; >1 accelerates, <1 slows.</p>
+  </div>
+  
+  <div class="input-group">
+    <label for="prepay-seasoning">Prepay Seasoning (years)</label>
+    <input type="number" id="prepay-seasoning" min="0" max="10" step="0.1" value="2.5" />
+    <p class="original-note">Original: 2.5 years (Source: Student Loan Refinancing Data). Time before peak prepay; higher delays ramp-up.</p>
+  </div>
+</div>
+
+    <!-- Graduation & Earnings -->
+    <div class="control-group">
+      <h3>Graduation & Earnings Thresholds</h3>
+      <p class="section-intro">
+        Thresholds influence repayment assumptions based on borrower outcomes. Higher thresholds make assumptions more conservative, delaying full repayment and lowering NPV; lower ones assume stronger repayment, boosting value.
+      </p>
+      <label>Graduation Rate Threshold %</label>
+      <input type="number" id="graduation-rate-threshold" min="0" max="100" step="1" />
+      <p class="original-note">Original: 75% (Source: College Scorecard Data). Splits tier 1/2 schools; higher tightens quality filter.</p>
+
+      <label>Median Earnings Threshold $</label>
+      <input type="number" id="earnings-threshold" min="0" step="1000" />
+      <p class="original-note">Original: $70,000 (Source: ED Median Earnings P10). Post-grad income cutoff; higher raises risk tier.</p>
+    </div>
+
+    <!-- FICO Adjustments -->
+    <div class="control-group">
+      <h3>FICO Score Adjustments (bps per 10-point change)</h3>
+      <p class="section-intro">
+        Adjustments fine-tune risk premiums based on credit scores. Positive values reward higher FICOs with lower premiums (higher NPV); negative penalize, but typically positive to reflect better repayment odds.
+      </p>
+      <label>FICO (Borrower) Adjustment (bps per 10 pts)</label>
+      <input type="number" id="fico-borrower" min="-200" max="200" step="5" />
+      <p class="original-note">Original: 50 bps (Source: Private Credit Spreads). Per-100 FICO point adjustment; lower FICO raises premium.</p>
+
+      <label>FICO (Cosigner) Adjustment (bps per 10 pts)</label>
+      <input type="number" id="fico-cosigner" min="-200" max="200" step="5" />
+      <p class="original-note">Original: 25 bps (Source: Cosigner Impact Studies). Half borrower weight; cosigner mitigates risk.</p>
+    </div>
+
+    <!-- Other Assumptions -->
+    <div class="control-group">
+      <h3>Other Global Assumptions</h3>
+      <p class="section-intro">
+        Base rates and multipliers set foundational assumptions. Higher base/inflation/CDR increase conservatism, lowering valuations; school tiers scale risk by institution quality, with higher multipliers penalizing lower tiers.
+      </p>
+      <label>Base Risk-Free Rate (%)</label>
+      <input type="number" id="base-risk-free-rate" min="0" max="20" step="0.01" />
+      <p class="original-note">Original: 4.25% (Source: U.S. Treasury 10Y Yield). SOFR + term premium; updates quarterly.</p>
+
+      <label>CDR Multiplier</label>
+      <input type="number" id="cdr-multiplier" min="0.5" max="3" step="0.1" />
+      <p class="original-note">Original: 1.0 (Source: Historical Default Data). Scales default curve; >1 stresses losses.</p>
+
+      <label>Inflation Assumption %</label>
+      <input type="number" id="inflation-assumption" min="0" max="10" step="0.1" />
+      <p class="original-note">Original: 3.0% (Source: Fed Projections). Adjusts future cash flows; higher erodes real NPV.</p>
+
+      <div class="control-group">
+  <h3>School Tier Multiplier</h3>
+  <p class="section-intro muted">
+    Scales risk premium by institution quality (A = elite, D = highest risk). Higher multiplier = higher risk premium.
+  </p>
+  
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 12px;">
+    <div>
+      <label style="display:block; margin-bottom:6px; font-weight:500;">Tier A</label>
+      <div class="slider-group compact">
+        <input type="number" id="school-tier-a" step="0.05" min="0.5" max="2.0" style="width:100%;">
+        <div class="slider-wrapper compact" style="margin-top:6px;">
+          <button class="increment-btn" data-target="school-tier-a" data-dir="-">-</button>
+          <input type="range" id="school-tier-a-range" min="0.5" max="2.0" step="0.05" style="flex:1;">
+          <button class="increment-btn" data-target="school-tier-a" data-dir="+">+</button>
+        </div>
+      </div>
+    </div>
+    <div>
+      <label style="display:block; margin-bottom:6px; font-weight:500;">Tier B</label>
+      <div class="slider-group compact">
+        <input type="number" id="school-tier-b" step="0.05" min="0.5" max="2.0" style="width:100%;">
+        <div class="slider-wrapper compact" style="margin-top:6px;">
+          <button class="increment-btn" data-target="school-tier-b" data-dir="-">-</button>
+          <input type="range" id="school-tier-b-range" min="0.5" max="2.0" step="0.05" style="flex:1;">
+          <button class="increment-btn" data-target="school-tier-b" data-dir="+">+</button>
+        </div>
+      </div>
+    </div>
+    <div>
+      <label style="display:block; margin-bottom:6px; font-weight:500;">Tier C</label>
+      <div class="slider-group compact">
+        <input type="number" id="school-tier-c" step="0.05" min="0.5" max="2.0" style="width:100%;">
+        <div class="slider-wrapper compact" style="margin-top:6px;">
+          <button class="increment-btn" data-target="school-tier-c" data-dir="-">-</button>
+          <input type="range" id="school-tier-c-range" min="0.5" max="2.0" step="0.05" style="flex:1;">
+          <button class="increment-btn" data-target="school-tier-c" data-dir="+">+</button>
+        </div>
+      </div>
+    </div>
+    <div>
+      <label style="display:block; margin-bottom:6px; font-weight:500;">Tier D</label>
+      <div class="slider-group compact">
+        <input type="number" id="school-tier-d" step="0.05" min="0.5" max="2.0" style="width:100%;">
+        <div class="slider-wrapper compact" style="margin-top:6px;">
+          <button class="increment-btn" data-target="school-tier-d" data-dir="-">-</button>
+          <input type="range" id="school-tier-d-range" min="0.5" max="2.0" step="0.05" style="flex:1;">
+          <button class="increment-btn" data-target="school-tier-d" data-dir="+">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="original-note" style="margin-top:16px;">
+    Original: A:0.8, B:1.0, C:1.3, D:1.5 (Source: College Scorecard Tiers)
+  </p>
+</div>
+
+    <div class="drawer-actions">
+      <button id="saveRiskValueBtn" class="primary-btn">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+  
+
+<!-- =========================================================
+     SCRIPT: FUNCTIONALITY (from working WrongColors version)
+     ========================================================= -->
+<script type="module">
+const BACKEND_URL = "https://loan-valuation-api.jeff-263.workers.dev";
+  
+  import { loadLoans } from "/loan-valuation/loadLoans.js?v=dev";
+
+  import { normalizeOwnership } from "/loan-valuation/ownershipEngine.js?v=dev";
+
+  import {
+  BORROWERS,
+  getBorrowerById,
+  upsertBorrower,
+  ensureBorrowerExists
+} from "/loan-valuation/borrowerStore.js?v=dev";
+
+import { valueLoan, loadValuationCurves, VALUATION_CURVES } from "/loan-valuation/valuationEngine.js?v=dev";
+
+const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/jeff-stratofied/loan-valuation/main/data";
+
+let loansData = null;
+let loansSha = null;
+let borrowersSha = null;
+let platformConfigSha = null;
+let configDirty = false;   // New global flag for config changes from drawer
+
+  let currentLoans = [];
+  let platformConfig = null;
+  let currentSha = null;
+
+let isBorrowersDirty = false;
+
+let borrowerData = null;
+let hasBorrowerChanges = false;  // separate flag for borrower edits
+
+  let SCHOOLTIERS = null;
+
+  let hasChanges = false;
+
+let currentRiskConfigSha = null;
+  
+// Fee waiver drawer state
+let feeDrawerOpen = false;
+let userFeeWaivers = {}; 
+  
+  // ===========================
+// UNSAVED CHANGES TRACKING
+// ===========================
+let hasUnsavedChanges = false;
+
+var ACTIVE_PROFILE = typeof ACTIVE_PROFILE !== 'undefined' ? ACTIVE_PROFILE : "system";  
+
+// Helper: Get the borrower object for a given loan using borrowerId
+function getBorrowerForLoan(loan) {
+  if (!loan?.borrowerId) {
+    console.warn(`Loan ${loan?.loanId || 'unknown'} has no borrowerId`);
+    return getDefaultBorrower();
+  }
+
+  let borrower = getBorrowerById(loan.borrowerId);
+
+  // Auto-create missing borrower profiles (this eliminates the warnings)
+  if (!borrower) {
+    borrower = ensureBorrowerExists(loan.borrowerId, loan.loanName || loan.loanId);
+    console.log(`Auto-created borrower profile for ${loan.borrowerId}`);
+  }
+
+  return borrower;
+}
+
+// Fallback borrower defaults (used when no match or missing data)
+function getDefaultBorrower() {
+  return {
+    borrowerFico: null,
+    cosignerFico: null,
+    degreeType: "Other",
+    school: "Unknown",
+    yearInSchool: 1,
+    isGraduateStudent: false
+  };
+}
+
+// ────────────────────────────────────────────────
+// Dynamic user options for ownership dropdown
+// Pulls from platformConfig.users (updated live via User/Fee Management)
+// ────────────────────────────────────────────────
+function getUserOptions() {
+  if (!platformConfig || !Array.isArray(platformConfig.users)) {
+    // Safe fallback while loading
+    return [
+      { value: "jeff", label: "Jeff Customer" },
+      { value: "nick", label: "Nick Lender" },
+      { value: "john", label: "John Investor" },
+      { value: "market", label: "Market" }
+    ];
+  }
+
+  return platformConfig.users
+    .filter(u => u.active !== false)           // only active users
+    .map(u => ({
+      value: u.id,
+      label: u.name || u.id                     // use "name" if present, else ID
+    }));
+}
+  
+
+  function normalizeDate(d) {
+  if (!d) return "";
+
+  // If already ISO (YYYY-MM-DD), keep it
+  if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+
+  // Handle MM/DD/YYYY format and convert it to YYYY-MM-DD
+  const m = d.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) {
+    const [, mm, dd, yyyy] = m;
+    return `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
+  }
+
+  console.warn("⚠️ Unrecognized date format:", d);
+  return d; // Returning unmodified value for further debugging
+}
+
+  
+const unsavedWarning = document.getElementById("unsaved-warning");
+const saveBtn = document.getElementById("save-btn");
+
+function markDirty() {
+  if (hasUnsavedChanges) return;
+  hasUnsavedChanges = true;
+
+  if (unsavedWarning) unsavedWarning.style.display = "block";
+  if (saveBtn) saveBtn.style.borderColor = "#fbbf24";
+}
+  
+function clearDirty() {
+  hasUnsavedChanges = false;
+  hasBorrowerChanges = false;  // ← Add this line
+  if (unsavedWarning) unsavedWarning.style.display = "none";
+  if (saveBtn) saveBtn.style.borderColor = "";
+}
+
+function markBorrowerDirty() {
+  hasBorrowerChanges = true;
+  hasUnsavedChanges = true;
+  if (unsavedWarning) unsavedWarning.style.display = "block";
+  if (saveBtn) saveBtn.style.borderColor = "var(--green)";
+}
+  
+// =====================================================
+// WARN BEFORE LEAVING WITH UNSAVED CHANGES
+// =====================================================
+window.addEventListener("beforeunload", (e) => {
+  if (!hasUnsavedChanges) return;
+  e.preventDefault();
+  e.returnValue = "";
+});
+
+
+let sortColumn = null;
+let sortDirection = 1; // 1 for ascending, -1 for descending
+
+function generateLoanId() {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let id = "";
+  for (let i = 0; i < 6; i++) {           // ← changed from 10 to 6
+    id += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return id;
+}
+
+function escapeHtml(str) {
+  if (str == null) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+  /* delete
+const schoolOptions = [
+  "Penn State","Ohio State","Pitt","Carnegie Mellon",
+  "Michigan","UCLA","USC","NYU",
+  "Wyoming Catholic College",
+  "Ave Maria University",
+  "Texas Tech University"
+];
+*/
+
+let schoolOptions = [];
+
+// Load schools from API (schoolTiers.json via worker)
+async function loadSchoolOptions() {
+  try {
+    const res = await fetch('https://loan-valuation-api.jeff-263.workers.dev/schoolTiers', {
+      cache: 'no-store'
+    });
+    if (!res.ok) throw new Error('Failed to load schools');
+    
+    const data = await res.json();
+    schoolOptions = Object.values(data)
+      .map(item => item.name?.trim())
+      .filter(name => name && name !== 'DEFAULT' && name !== 'UNKNOWN_WYOMING_CATHOLIC');
+    
+    // Optional: sort alphabetically
+    schoolOptions.sort();
+    
+    // Re-render table after schools load (important for initial render)
+    renderTable();
+  } catch (err) {
+    console.error('School options load failed:', err);
+    // Fallback to minimal list if API fails
+    schoolOptions = ["Penn State", "Ohio State", "Texas Tech University"];
+  }
+}
+
+// Call it early
+loadSchoolOptions();
+
+  
+// ==============================
+// Add Loan button
+// ==============================
+document.getElementById("add-row").addEventListener("click", () => {
+  const newLoan = {
+    loanId: generateLoanId(),
+    borrowerId: `BRW-${generateLoanId()}`,
+    loanName: "New Loan",
+    school: "",
+    loanStartDate: new Date().toISOString().split('T')[0],
+    principal: 0,
+    nominalRate: 0.08,
+    termYears: 10,
+    graceYears: 0,
+    loanStatus: "",
+    feeWaiver: "none",
+    events: [],
+    ownershipLots: [{ user: "market", pct: 1, purchaseDate: new Date().toISOString().split('T')[0] }],
+    user: "market"
+  };
+
+  currentLoans.unshift(newLoan);   // add to top
+  renderTable();
+  markDirty();
+});
+
+  
+function openEventsDrawer(loan) {
+  const existing = document.getElementById("events-drawer");
+  if (existing) existing.remove();
+
+  const drawer = document.createElement("div");
+  drawer.id = "events-drawer";
+  drawer.style.cssText = `
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 480px;
+    height: 100%;
+    background: var(--card);
+    box-shadow: -4px 0 20px rgba(0,0,0,0.25);
+    z-index: 1000;
+    overflow-y: auto;
+    color: var(--text);
+  `;
+
+  // Gather existing events
+  const prepayments = loan.events?.filter(e => e.type === 'prepayment') || [];
+  const deferrals    = loan.events?.filter(e => e.type === 'deferral')    || [];
+  const defaults     = loan.events?.filter(e => e.type === 'default')     || [];
+
+  drawer.innerHTML = `
+    <div style="padding: 24px;">
+      <!-- Header -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <h3 style="margin:0; font-size:1.35rem; font-weight:600;">
+          Events — ${loan.loanName || 'Loan'} ${loan.loanId || ''}
+        </h3>
+        <button id="close-events-drawer" style="
+          background: var(--delete-bg);
+          border: 1px solid var(--border);
+          color: var(--text);
+          padding: 8px 16px;
+          border-radius: 999px;
+          cursor: pointer;
+          font-size: 0.95rem;
+          font-weight: 500;
+        ">
+          Close
+        </button>
+      </div>
+
+      <!-- Info box -->
+      <div style="
+        background: color-mix(in srgb, var(--card) 85%, var(--muted) 15%);
+        color: var(--muted);
+        padding: 16px 20px;
+        border-radius: 12px;
+        margin-bottom: 32px;
+        font-size: 0.94rem;
+        line-height: 1.55;
+        border: 1px solid var(--border);
+      ">
+        Loan lifecycle events (Prepayments, Deferrals & Default)<br>
+        These affect amortization, earnings, and ROI calculations.<br><br>
+        <strong>Adding or deleting events here updates the loan immediately</strong> — save the main page to persist.
+      </div>
+
+      <!-- Prepayments Section -->
+      <div style="margin-bottom: 32px;">
+        <h4 style="margin: 0 0 16px; font-size: 1.1rem; font-weight: 600;">Prepayments</h4>
+        ${prepayments.length === 0 
+          ? '<p style="color: var(--muted);">No prepayments yet</p>' 
+          : prepayments.map(e => `
+            <div style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding: 12px;
+              background: color-mix(in srgb, var(--card) 90%, var(--border) 10%);
+              border-radius: 8px;
+              margin-bottom: 12px;
+              font-size: 0.95rem;
+            ">
+              <div>
+                ${e.date} — $${Number(e.amount).toLocaleString()}
+              </div>
+              <button data-event-id="${e.id}" style="
+                background: var(--delete-bg);
+                border: 1px solid var(--border);
+                color: var(--text);
+                padding: 4px 10px;
+                border-radius: 999px;
+                font-size: 0.85rem;
+                cursor: pointer;
+              ">Delete</button>
+            </div>
+          `).join('')}
+
+        <!-- Add Prepayment -->
+        <div style="margin-top: 20px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div>
+              <label style="display: block; margin-bottom: 6px; color: var(--muted);">Date</label>
+              <input type="date" id="prepay-date" style="width:100%;" />
+            </div>
+            <div>
+              <label style="display: block; margin-bottom: 6px; color: var(--muted);">Amount</label>
+              <input type="number" id="prepay-amount" placeholder="0.00" min="0" step="0.01" style="width:100%;" />
+            </div>
+          </div>
+          <button id="add-prepay-btn" style="
+            background: var(--green);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 999px;
+            cursor: pointer;
+            font-weight: 500;
+          ">Add Prepayment</button>
+        </div>
+      </div>
+
+      <!-- Deferrals Section -->
+      <div style="margin-bottom: 32px;">
+        <h4 style="margin: 0 0 16px; font-size: 1.1rem; font-weight: 600;">Deferrals</h4>
+        ${deferrals.length === 0 
+          ? '<p style="color: var(--muted);">No deferrals yet</p>' 
+          : deferrals.map(e => `
+            <div style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding: 12px;
+              background: color-mix(in srgb, var(--card) 90%, var(--border) 10%);
+              border-radius: 8px;
+              margin-bottom: 12px;
+              font-size: 0.95rem;
+            ">
+              <div>
+                ${e.startDate} — ${e.months} months
+              </div>
+              <button data-event-id="${e.id}" style="
+                background: var(--delete-bg);
+                border: 1px solid var(--border);
+                color: var(--text);
+                padding: 4px 10px;
+                border-radius: 999px;
+                font-size: 0.85rem;
+                cursor: pointer;
+              ">Delete</button>
+            </div>
+          `).join('')}
+
+        <!-- Add Deferral -->
+        <div style="margin-top: 20px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div>
+              <label style="display: block; margin-bottom: 6px; color: var(--muted);">Start Date</label>
+              <input type="date" id="defer-start" style="width:100%;" />
+            </div>
+            <div>
+              <label style="display: block; margin-bottom: 6px; color: var(--muted);">Months</label>
+              <input type="number" id="defer-months" min="1" placeholder="1–36" style="width:100%;" />
+            </div>
+          </div>
+          <button id="add-deferral-btn" style="
+            background: var(--green);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 999px;
+            cursor: pointer;
+            font-weight: 500;
+          ">Add Deferral</button>
+        </div>
+      </div>
+
+      <!-- Default Section -->
+      <div>
+        <h4 style="margin: 0 0 16px; font-size: 1.1rem; font-weight: 600;">Default</h4>
+        ${defaults.length === 0 
+          ? '<p style="color: var(--muted);">No default event yet</p>' 
+          : defaults.map(e => `
+            <div style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding: 12px;
+              background: color-mix(in srgb, var(--card) 90%, var(--border) 10%);
+              border-radius: 8px;
+              font-size: 0.95rem;
+            ">
+              <div>
+                ${e.date} — Recovery $${Number(e.recoveryAmount).toLocaleString()}
+              </div>
+              <button data-event-id="${e.id}" style="
+                background: var(--delete-bg);
+                border: 1px solid var(--border);
+                color: var(--text);
+                padding: 4px 10px;
+                border-radius: 999px;
+                font-size: 0.85rem;
+                cursor: pointer;
+              ">Delete</button>
+            </div>
+          `).join('')}
+
+        ${defaults.length === 0 ? `
+          <div style="margin-top: 20px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+              <div>
+                <label style="display: block; margin-bottom: 6px; color: var(--muted);">Date</label>
+                <input type="date" id="default-date" style="width:100%;" />
+              </div>
+              <div>
+                <label style="display: block; margin-bottom: 6px; color: var(--muted);">Recovery Amount</label>
+                <input type="number" id="default-recovery" placeholder="0.00" min="0" step="0.01" style="width:100%;" />
+              </div>
+            </div>
+            <button id="add-default-btn" style="
+              background: #ef4444;
+              border: none;
+              color: white;
+              padding: 10px 20px;
+              border-radius: 999px;
+              cursor: pointer;
+              font-weight: 500;
+            ">Add Default</button>
+          </div>
+        ` : '<p style="color: var(--muted); font-style: italic;">Only one default event allowed per loan.</p>' }
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(drawer);
+
+  // ─── Event listeners ──────────────────────────────────────
+
+  // Close
+  drawer.querySelector("#close-events-drawer").onclick = () => {
+    drawer.remove();
+  };
+
+  // Delete any event
+  drawer.querySelectorAll("button[data-event-id]").forEach(btn => {
+    btn.onclick = () => {
+      if (!confirm("Delete this event?")) return;
+      const id = btn.dataset.eventId;
+      loan.events = loan.events.filter(e => e.id !== id);
+      markDirty();
+      drawer.remove();
+      openEventsDrawer(loan);
+      renderTable();
+    };
+  });
+
+  // Add prepayment
+  const addPrepayBtn = drawer.querySelector("#add-prepay-btn");
+if (addPrepayBtn) {
+  addPrepayBtn.onclick = () => {
+    const date = drawer.querySelector("#prepay-date").value;
+    const amount = Number(drawer.querySelector("#prepay-amount").value);
+    if (!date || amount <= 0 || isNaN(amount)) {
+      alert("Enter a valid date and amount > 0");
+      return;
+    }
+    loan.events = loan.events || [];
+    loan.events.push({
+      id: crypto.randomUUID(),
+      type: "prepayment",
+      date,
+      amount
+    });
+    loan.events.sort((a, b) => new Date(a.date || a.startDate) - new Date(b.date || b.startDate));
+    markDirty();
+    drawer.remove();
+    openEventsDrawer(loan);
+    renderTable();
+  };
+}
+
+  // Add deferral
+  const addDeferralBtn = drawer.querySelector("#add-deferral-btn");
+if (addDeferralBtn) {
+addDeferralBtn.onclick = () => {
+    const startDate = drawer.querySelector("#defer-start").value;
+    const months = Number(drawer.querySelector("#defer-months").value);
+    if (!startDate || months <= 0 || isNaN(months)) {
+      alert("Enter a valid start date and months ≥ 1");
+      return;
+    }
+    loan.events = loan.events || [];
+    loan.events.push({
+      id: crypto.randomUUID(),
+      type: "deferral",
+      startDate,
+      months
+    });
+    loan.events.sort((a, b) => new Date(a.date || a.startDate) - new Date(b.date || b.startDate));
+    markDirty();
+    drawer.remove();
+    openEventsDrawer(loan);
+    renderTable();
+  };
+}
+
+  // Add default
+  const addDefaultBtn = drawer.querySelector("#add-default-btn");
+if (addDefaultBtn) {
+addDefaultBtn.onclick = () => {
+    const date = drawer.querySelector("#default-date").value;
+    const recoveryAmount = Number(drawer.querySelector("#default-recovery").value);
+    if (!date || recoveryAmount < 0 || isNaN(recoveryAmount)) {
+      alert("Enter a valid date and recovery amount ≥ 0");
+      return;
+    }
+    if (loan.events?.some(e => e.type === "default")) {
+      alert("This loan already has a Default event.");
+      return;
+    }
+    loan.events = loan.events || [];
+    loan.events.push({
+      id: crypto.randomUUID(),
+      type: "default",
+      date,
+      recoveryAmount
+    });
+    loan.events.sort((a, b) => new Date(a.date || a.startDate) - new Date(b.date || b.startDate));
+    markDirty();
+    drawer.remove();
+    openEventsDrawer(loan);
+    renderTable();
+  };
+}
+}
+
+function openOwnershipDrawer(loanOrId) {
+  // Find loan by ID or use passed object
+  const loan =
+    typeof loanOrId === "string"
+      ? currentLoans.find(l => String(l.loanId) === String(loanOrId))
+      : loanOrId;
+
+  if (!loan) {
+    console.error("Ownership drawer: loan not found", loanOrId);
+    return;
+  }
+
+  // Clean up any existing drawer
+  const existing = document.getElementById("ownership-drawer");
+  if (existing) existing.remove();
+
+  const drawer = document.createElement("div");
+  drawer.id = "ownership-drawer";
+  drawer.style.cssText = `
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 440px;
+    height: 100%;
+    background: var(--card);
+    box-shadow: var(--shadow);
+    padding: 20px;
+    z-index: 1000;
+    overflow-y: auto;
+    color: var(--text);
+  `;
+
+  // Helper to safely format date for input[type=date]
+  function formatDateForInput(dateStr) {
+    if (!dateStr) return "";
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return "";
+      return date.toISOString().split("T")[0];
+    } catch {
+      return "";
+    }
+  }
+
+  // Render all ownership lots
+  function renderLots() {
+    if (!Array.isArray(loan.ownershipLots) || loan.ownershipLots.length === 0) {
+      return '<div style="color:var(--muted);padding:12px 0;">No ownership lots yet</div>';
+    }
+
+    return loan.ownershipLots
+      .map((lot, idx) => `
+        <div style="display:grid;grid-template-columns:1fr 90px 130px 110px 40px;gap:8px;margin-bottom:8px;align-items:center;">
+          <select data-idx="${idx}" data-field="user">
+            ${getUserOptions()
+              .map(
+                u =>
+                  `<option value="${u.value}" ${u.value === lot.user ? "selected" : ""}>${u.label}</option>`
+              )
+              .join("")}
+          </select>
+          <div style="position:relative;">
+            <input type="number" step="0.01" min="0" max="100" 
+              data-idx="${idx}" data-field="pct"
+              value="${(Number(lot.pct) * 100).toFixed(2)}"
+              style="width:100%;text-align:right;padding-right:24px;">
+            <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--muted);">%</span>
+          </div>
+          <input type="date" 
+            data-idx="${idx}" data-field="purchaseDate"
+            value="${formatDateForInput(lot.purchaseDate)}">
+          <input type="number" step="0.01" min="0"
+            data-idx="${idx}" data-field="pricePaid"
+            value="${Number(lot.pricePaid || 0).toFixed(2)}"
+            style="text-align:right;">
+          <button data-action="remove-lot" data-idx="${idx}" 
+            style="background:#374151;color:#f87171;border:none;border-radius:4px;padding:4px 6px;cursor:pointer;">✕</button>
+        </div>
+      `)
+      .join("");
+  }
+
+  // Calculate current total percentage
+  function getTotalPercentage() {
+    return loan.ownershipLots.reduce((sum, lot) => sum + Number(lot.pct || 0), 0);
+  }
+
+  drawer.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="margin:0;">Ownership — ${loan.loanName || loan.loanId}</h3>
+      <button id="close-ownership-btn" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--muted);">×</button>
+    </div>
+    
+    <div style="font-size:0.85rem;color:var(--muted);margin-bottom:16px;line-height:1.4;">
+      Define ownership tranches. Percentages must sum to 100%. Each lot needs a purchase date and price.
+    </div>
+
+    <div id="lot-list" style="margin-bottom:16px;">
+      ${renderLots()}
+    </div>
+
+    <div style="margin:16px 0;">
+      <button id="add-lot-btn" style="padding:8px 16px;background:var(--green);color:white;border:none;border-radius:6px;cursor:pointer;">
+        + Add Ownership Lot
+      </button>
+    </div>
+
+    <div id="ownership-warning" style="display:none;color:#ef4444;font-size:0.85rem;margin:12px 0;padding:8px;background:rgba(239,68,68,0.1);border-radius:6px;">
+      Ownership must total 100% (±0.1%) and every lot needs a valid purchase date and price > 0.
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:20px;">
+      <button id="ownership-save" style="flex:1;padding:10px;background:var(--green);color:white;border:none;border-radius:6px;font-weight:500;cursor:pointer;">
+        Save Ownership
+      </button>
+      <button id="close-ownership-btn-bottom" style="flex:1;padding:10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text);cursor:pointer;">
+        Cancel
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(drawer);
+
+  // ───────────────────────────────────────────────
+  // Event Listeners
+  // ───────────────────────────────────────────────
+
+  // Live updates on input
+  drawer.addEventListener("input", (e) => {
+    const target = e.target;
+    if (!target.dataset.field || target.dataset.idx === undefined) return;
+
+    const idx = Number(target.dataset.idx);
+    const field = target.dataset.field;
+
+    if (field === "pct") {
+      loan.ownershipLots[idx].pct = Number(target.value) / 100;
+    } else if (field === "purchaseDate") {
+      loan.ownershipLots[idx][field] = target.value || null;
+    } else {
+      loan.ownershipLots[idx][field] = target.value;
+    }
+
+    markDirty();
+    // Optional: live total % display could be added here
+  });
+
+  // Remove lot
+  drawer.addEventListener("click", (e) => {
+    if (e.target.dataset.action === "remove-lot") {
+      const idx = Number(e.target.dataset.idx);
+      if (confirm("Remove this ownership lot?")) {
+        loan.ownershipLots.splice(idx, 1);
+        markDirty();
+        // Re-render instead of full reload
+        drawer.querySelector("#lot-list").innerHTML = renderLots();
+        renderTable();
+      }
+    }
+  });
+
+  // Add new lot
+  drawer.querySelector("#add-lot-btn").onclick = () => {
+    loan.ownershipLots.push({
+      user: getUserOptions()[0]?.value || "market",
+      pct: 0,
+      purchaseDate: "",
+      pricePaid: 0
+    });
+    markDirty();
+    drawer.querySelector("#lot-list").innerHTML = renderLots();
+    renderTable();
+  };
+
+  // Save button with validation
+  drawer.querySelector("#ownership-save").onclick = () => {
+    const warningEl = drawer.querySelector("#ownership-warning");
+    const total = getTotalPercentage();
+    const lots = loan.ownershipLots;
+
+    const isValid =
+      lots.length > 0 &&
+      Math.abs(total - 1) < 0.001 && // allow tiny floating point difference
+      lots.every((lot) => {
+        const date = lot.purchaseDate;
+        const hasValidDate = date && !isNaN(new Date(date).getTime());
+        const hasPrice = Number(lot.pricePaid) > 0;
+        return hasValidDate && hasPrice;
+      });
+
+    if (!isValid) {
+      warningEl.style.display = "block";
+      warningEl.textContent =
+        Math.abs(total - 1) >= 0.001
+          ? `Total ownership is ${total.toFixed(2)}% — must be 100%`
+          : "Every lot needs valid purchase date and price > 0";
+      return;
+    }
+
+    // Success: normalize, save, close
+    normalizeOwnership(loan); // make sure internal state is clean
+    markDirty();
+    drawer.remove();
+    renderTable();
+    console.log("Ownership saved successfully for loan", loan.loanId);
+  };
+
+  // Close buttons
+  const closeDrawer = () => {
+    drawer.remove();
+  };
+
+  drawer.querySelector("#close-ownership-btn").onclick = closeDrawer;
+  drawer.querySelector("#close-ownership-btn-bottom").onclick = closeDrawer;
+
+  // Optional: close with Escape key
+  const escHandler = (e) => {
+    if (e.key === "Escape") {
+      closeDrawer();
+      document.removeEventListener("keydown", escHandler);
+    }
+  };
+  document.addEventListener("keydown", escHandler);
+}
+
+// Expose to global scope so the inline onclick in the table works
+window.openOwnershipDrawer = openOwnershipDrawer;
+  
+
+// ────────────────────────────────────────────────
+// Fee Management Drawer (Save button moved to TOP + fee inputs now trigger dirty)
+// ────────────────────────────────────────────────
+function openUserManagementDrawer() {
+  const existing = document.getElementById("user-management-drawer");
+  if (existing) existing.remove();
+
+  const drawer = document.createElement("div");
+  drawer.id = "user-management-drawer";
+  drawer.style.cssText = `
+    position: fixed; top: 0; right: 0;
+    width: 620px; height: 100%;
+    background: var(--card);
+    box-shadow: -8px 0 30px rgba(0,0,0,0.3);
+    z-index: 1000; overflow-y: auto;
+    color: var(--text);
+    transition: transform 0.3s ease;
+    transform: translateX(100%);
+  `;
+  setTimeout(() => { drawer.style.transform = "translateX(0)"; }, 10);
+
+  // ── Helper: Render users table ──
+  function renderUsersTable() {
+    let html = `
+      <table style="width:100%; border-collapse: collapse; margin-top: 16px;">
+        <thead>
+          <tr style="background: var(--border);">
+            <th style="padding:12px; text-align:left;">ID</th>
+            <th style="padding:12px; text-align:left;">Name</th>
+            <th style="padding:12px; text-align:left;">Role</th>
+            <th style="padding:12px; text-align:center;">Active</th>
+            <th style="padding:12px; text-align:center;">Fee Waiver</th>
+            <th style="padding:12px; text-align:center;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    platformConfig.users.forEach((user, idx) => {
+      const isMarket = user.id === "market";
+      html += `
+        <tr data-idx="${idx}" style="border-bottom: 1px solid var(--border);">
+          <td style="padding:12px;">${user.id}</td>
+          <td style="padding:12px;">
+            <input type="text" value="${(user.name || user.id).replace(/"/g,'&quot;')}" 
+                   data-field="name" data-idx="${idx}"
+                   style="width:100%; padding:6px; border:1px solid var(--input-border); border-radius:6px; background:var(--input-bg); color:var(--text);">
+          </td>
+          <td style="padding:12px;">
+            <select data-field="role" data-idx="${idx}"
+                    style="width:100%; padding:6px; border:1px solid var(--input-border); border-radius:6px; background:var(--input-bg); color:var(--text);">
+              <option value="customer" ${user.role === 'customer' ? 'selected' : ''}>Customer</option>
+              <option value="lender"   ${user.role === 'lender'   ? 'selected' : ''}>Lender</option>
+              <option value="investor" ${user.role === 'investor' ? 'selected' : ''}>Investor</option>
+              <option value="market"   ${user.role === 'market'   ? 'selected' : ''}>Market</option>
+            </select>
+          </td>
+          <td style="padding:12px; text-align:center;">
+            <input type="checkbox" ${user.active !== false ? 'checked' : ''} 
+                   data-field="active" data-idx="${idx}">
+          </td>
+          <td style="padding:12px; text-align:center;">
+            <select data-field="feeWaiver" data-idx="${idx}"
+                    style="padding:6px; border:1px solid var(--input-border); border-radius:6px; background:var(--input-bg); color:var(--text);">
+              <option value="none"          ${user.feeWaiver === 'none'          ? 'selected' : ''}>None</option>
+              <option value="setup"         ${user.feeWaiver === 'setup'         ? 'selected' : ''}>Setup Only</option>
+              <option value="all"           ${user.feeWaiver === 'all'           ? 'selected' : ''}>All Fees</option>
+              <option value="setup_grace"   ${user.feeWaiver === 'setup_grace'   ? 'selected' : ''}>Setup + Grace</option>
+              <option value="grace_deferral"${user.feeWaiver === 'grace_deferral'? 'selected' : ''}>Grace/Deferral Only</option>
+            </select>
+          </td>
+          <td style="padding:12px; text-align:center;">
+            ${isMarket 
+              ? '<span style="color:var(--muted); font-size:0.9rem;">(system)</span>'
+              : `<button data-action="delete-user" data-idx="${idx}" 
+                         style="background:#dc2626; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">
+                   Delete
+                 </button>`
+            }
+          </td>
+        </tr>
+      `;
+    });
+
+    html += '</tbody></table>';
+    return html;
+  }
+
+  // ── Drawer HTML structure ──
+  drawer.innerHTML = `
+    <div style="padding: 28px;">
+      <!-- Header -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <h2 style="margin:0; font-size:1.6rem; font-weight:600;">User & Fee Management</h2>
+        <div>
+          <button id="drawer-save-btn" style="
+            background: var(--green); color: white; border: none;
+            padding: 10px 24px; border-radius: 999px; cursor: pointer; font-weight: 600; margin-right:8px;">
+            Save & Close
+          </button>
+          <button id="close-user-drawer" style="
+            background: var(--delete-bg); border: 1px solid var(--border); color: var(--text);
+            padding: 10px 20px; border-radius: 999px; cursor: pointer;">
+            Close
+          </button>
+        </div>
+      </div>
+
+      <!-- Add New User -->
+      <section style="margin-bottom: 36px; padding: 20px; background: rgba(0,0,0,0.08); border-radius: 12px;">
+        <h3 style="margin:0 0 16px; font-size:1.25rem;">Add New User</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; align-items: center;">
+          <input id="new-user-id"    placeholder="User ID (lowercase, unique)"    style="padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--input-bg); color:var(--text);">
+          <input id="new-user-name"  placeholder="Display Name"                   style="padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--input-bg); color:var(--text);">
+          <select id="new-user-role" style="padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--input-bg); color:var(--text);">
+            <option value="customer">Customer</option>
+            <option value="lender">Lender</option>
+            <option value="investor">Investor</option>
+            <option value="market">Market</option>
+          </select>
+          <button id="add-user-btn" style="
+            background: var(--green); color: white; border: none;
+            padding: 10px 20px; border-radius: 999px; cursor: pointer; font-weight: 500;">
+            Add User
+          </button>
+        </div>
+      </section>
+
+      <!-- Platform Fees -->
+      <section style="margin-bottom: 36px;">
+        <h3 style="margin:0 0 16px; font-size:1.3rem;">Platform Fees</h3>
+        <div style="display: grid; gap: 20px; max-width: 420px;">
+          <label>
+            <div style="font-weight:500; margin-bottom:8px;">Setup Fee (one-time per lot)</div>
+            <input type="number" id="global-setup-fee" value="${platformConfig?.fees?.setupFee || 150}"
+                   min="0" step="10" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px;">
+          </label>
+          <label>
+            <div style="font-weight:500; margin-bottom:8px;">Monthly Servicing (basis points)</div>
+            <input type="number" id="global-monthly-bps" value="${platformConfig?.fees?.monthlyServicingBps || 25}"
+                   min="0" max="1000" step="5" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px;">
+          </label>
+        </div>
+      </section>
+
+      <!-- Users Table -->
+      <section>
+        <h3 style="margin:0 0 16px; font-size:1.3rem;">Users & Waivers</h3>
+        <div id="users-table-container">${renderUsersTable()}</div>
+      </section>
+    </div>
+  `;
+
+  document.body.appendChild(drawer);
+
+  // ── Event Listeners ──
+
+  // Dirty tracking for fees (no markDirty, as saves are drawer-only)
+  ['#global-setup-fee', '#global-monthly-bps'].forEach(sel => {
+    drawer.querySelector(sel)?.addEventListener('input', () => {});
+  });
+
+  // Inline edits (no markDirty)
+  drawer.addEventListener('change', e => {
+    const el = e.target;
+    if (!el.dataset.field || !el.dataset.idx) return;
+    const idx = parseInt(el.dataset.idx, 10);
+    const field = el.dataset.field;
+    const value = field === 'active' ? el.checked : el.value;
+    platformConfig.users[idx][field] = value;
+  });
+
+  // Add new user (no markDirty)
+  drawer.querySelector("#add-user-btn").onclick = () => {
+    const idEl = drawer.querySelector("#new-user-id");
+    const nameEl = drawer.querySelector("#new-user-name");
+    const roleEl = drawer.querySelector("#new-user-role");
+    const id = (idEl.value || '').trim().toLowerCase();
+    const name = (nameEl.value || '').trim() || id;
+    const role = roleEl.value;
+    if (!id) return alert("User ID is required.");
+    if (platformConfig.users.some(u => u.id === id)) return alert("That ID already exists.");
+    platformConfig.users.push({
+      id,
+      name,
+      role,
+      feeWaiver: "none",
+      active: true
+    });
+    idEl.value = nameEl.value = "";
+    roleEl.value = "investor";
+    drawer.querySelector("#users-table-container").innerHTML = renderUsersTable();
+  };
+
+  // Delete user (no markDirty)
+  drawer.addEventListener('click', e => {
+    if (!e.target.dataset.action || e.target.dataset.action !== 'delete-user') return;
+    const idx = parseInt(e.target.dataset.idx, 10);
+    const user = platformConfig.users[idx];
+    if (user.id === "market") return alert("Cannot delete the system 'market' user.");
+    platformConfig.users.splice(idx, 1);
+    drawer.querySelector("#users-table-container").innerHTML = renderUsersTable();
+  });
+
+  // Close
+  drawer.querySelector("#close-user-drawer").onclick = () => {
+    drawer.style.transform = "translateX(100%)";
+    setTimeout(() => drawer.remove(), 300);
+  };
+
+  // Save & Close (independent save - always saves config changes)
+  drawer.querySelector("#drawer-save-btn").onclick = async () => {
+    // Update fees
+    const setup = parseInt(drawer.querySelector('#global-setup-fee').value, 10);
+    const bps = parseInt(drawer.querySelector('#global-monthly-bps').value, 10);
+    if (!isNaN(setup)) platformConfig.fees.setupFee = setup;
+    if (!isNaN(bps)) platformConfig.fees.monthlyServicingBps = bps;
+
+    try {
+      const freshRes = await fetch("https://loan-valuation-api.jeff-263.workers.dev/platformConfig", { cache: "no-store" });
+      let freshSha = null;
+      if (freshRes.ok) {
+        const data = await freshRes.json();
+        freshSha = data.sha;
+      } else {
+        console.error("Fresh SHA fetch failed:", freshRes.status);
+      }
+
+      console.log("Attempting config save with SHA:", freshSha);
+      console.log("Sending config data:", JSON.stringify({
+        fees: platformConfig.fees,
+        users: platformConfig.users,
+        sha: freshSha
+      }, null, 2));
+
+      const saveRes = await fetch("https://loan-valuation-api.jeff-263.workers.dev/platformConfig", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fees: platformConfig.fees,
+          users: platformConfig.users,
+          sha: freshSha
+        })
+      });
+
+      console.log("Save response status:", saveRes.status);
+
+      if (!saveRes.ok) {
+        let errBody = {};
+        try {
+          errBody = await saveRes.json();
+        } catch {
+          errBody = { message: await saveRes.text() || "Unknown error" };
+        }
+        console.error("Config save failed:", errBody);
+        alert(`Save failed: ${saveRes.status} - ${errBody.message || errBody.error || "Check console for details"}`);
+        return;
+      }
+
+      const saved = await saveRes.json();
+      console.log("Save success:", saved);
+      if (saved.sha) platformConfigSha = saved.sha;
+
+      clearDirty();
+      const statusEl = document.getElementById("status");
+      if (statusEl) {
+        statusEl.textContent = "Users & fees saved!";
+        setTimeout(() => { if (statusEl.textContent.includes("saved")) statusEl.textContent = ""; }, 5000);
+      }
+
+      drawer.style.transform = "translateX(100%)";
+      setTimeout(() => drawer.remove(), 300);
+    } catch (err) {
+      console.error("Save network error:", err);
+      alert("Save failed due to network error: " + err.message + ". Check console.");
+    }
+  };
+}
+
+
+function normalizeLoan(l, idx) {
+  // If backend ID is numeric (old system), replace it with a new random ID
+  let newId;
+  if (!l.loanId || /^[0-9]+$/.test(String(l.loanId))) {
+    newId = generateLoanId();
+  } else {
+    newId = l.loanId;
+  }
+
+  const loan = {
+  loanId: newId,
+  borrowerId: l.borrowerId ?? `BRW-${newId}`, // ← ADD THIS
+  loanName: l.loanName ?? "",
+    school: l.school ?? "",
+    loanStartDate: l.loanStartDate ?? "",
+    principal: Number(l.principal ?? 0),
+    rate: (() => {
+  if (typeof l.rate === "string") {
+    const cleaned = l.rate.replace("%", "").trim();
+    return Number(cleaned) / 100;
+  }
+  return Number(l.rate ?? 0);
+})(),
+
+    termYears: Number(l.termYears ?? 10),
+    graceYears: Number(l.graceYears ?? 0),
+
+    // legacy fields (USED ONLY FOR MIGRATION)
+    user: l.user ?? "jeff",
+    purchaseDate: l.purchaseDate ?? "",
+    purchasePrice: Number(l.purchasePrice ?? 0),
+
+    events: Array.isArray(l.events)
+      ? l.events.map(e => {
+          if (e.type === "default") {
+            return {
+              id: e.id ?? crypto.randomUUID(),
+              type: "default",
+              date: e.date ?? "",
+              recoveryAmount: Number(e.recoveryAmount ?? 0)
+            };
+          }
+          return e;
+        })
+      : [],
+
+    ownership: l.ownership,
+    ownershipLots: l.ownershipLots
+  };
+
+  // 🔑 CANONICALIZE OWNERSHIP
+  normalizeOwnership(loan);
+  // Ensure borrower exists for new loans
+ensureBorrowerExists(loan.borrowerId, loan.loanName);
+
+  return loan;
+}
+
+
+/* Sort loans */
+function sortLoans() {
+  if (!sortColumn) return;
+
+  currentLoans.sort((a, b) => {
+    let va = a[sortColumn];
+    let vb = b[sortColumn];
+
+    // -------------------------
+    // Date fields
+    // -------------------------
+    if (['loanStartDate', 'purchaseDate'].includes(sortColumn)) {
+      va = va ? new Date(va).getTime() : 0;
+      vb = vb ? new Date(vb).getTime() : 0;
+    }
+
+    // -------------------------
+    // String fields
+    // -------------------------
+    else if (typeof va === 'string' || typeof vb === 'string') {
+      va = (va ?? '').toString().toLowerCase();
+      vb = (vb ?? '').toString().toLowerCase();
+    }
+
+    // -------------------------
+    // Numeric fallback
+    // -------------------------
+    else {
+      va = Number(va);
+      vb = Number(vb);
+
+      if (Number.isNaN(va)) va = 0;
+      if (Number.isNaN(vb)) vb = 0;
+    }
+
+    if (va < vb) return -sortDirection;
+    if (va > vb) return sortDirection;
+    return 0;
+  });
+}
+
+
+function renderOwnershipCell(loan) {
+  const hasOwnership = loan.ownershipLots && loan.ownershipLots.length > 0;
+
+  // Build summary text (existing logic, unchanged)
+  let summaryHtml = "";
+
+  if (hasOwnership) {
+    const byUser = {};
+
+    loan.ownershipLots.forEach(lot => {
+      if (!byUser[lot.user]) byUser[lot.user] = [];
+      byUser[lot.user].push(lot);
+    });
+
+    summaryHtml = Object.entries(byUser)
+      .map(([user, lots]) => {
+        return lots
+          .sort((a, b) => new Date(a.purchaseDate) - new Date(b.purchaseDate))
+          .map(lot => {
+            const pct = Math.round(lot.pct * 100);
+            const date = lot.purchaseDate || "—";
+            return `<div style="font-size:11px; line-height:1.2">
+              <strong>${user}</strong> ${pct}%
+              <span style="color:var(--muted)">(${date})</span>
+            </div>`;
+          })
+          .join("");
+      })
+      .join("");
+  }
+
+  // Clickable wrapper
+  return `
+    <button
+      class="ownership-pill"
+      onclick="openOwnershipDrawer('${loan.loanId}')"
+      title="Edit ownership"
+    >
+      ${
+        hasOwnership
+          ? summaryHtml
+          : `<span style="opacity:0.7">Owner</span>`
+      }
+    </button>
+  `;
+}
+
+window.openBorrowerDrawer = function (borrowerId, loanId, loanName = '') {
+  // Remove any existing drawer
+  const existing = document.getElementById("borrower-drawer");
+  if (existing) existing.remove();
+
+  const drawer = document.createElement("div");
+  drawer.id = "borrower-drawer";
+  drawer.style.cssText = `
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 420px;
+    height: 100%;
+    background: var(--card);
+    box-shadow: var(--shadow);
+    padding: 20px;
+    z-index: 1000;
+    overflow-y: auto;
+  `;
+
+  drawer.innerHTML = `
+    <h3 style="margin-top:0">Borrower — ${borrowerId}</h3>
+    <div style="font-size:0.85rem; color:var(--muted); margin-bottom:16px">
+      Linked to Loan ID: ${loanId || '—'}
+    </div>
+
+    <div style="display:grid; gap:16px; margin-bottom:24px;">
+      <label>
+        <div style="font-size:0.8rem; color:var(--muted); margin-bottom:4px">Borrower FICO</div>
+        <input type="number" id="borrower-fico" placeholder="e.g. 720" min="300" max="850">
+      </label>
+      <label>
+        <div style="font-size:0.8rem; color:var(--muted); margin-bottom:4px">Cosigner FICO (optional)</div>
+        <input type="number" id="cosigner-fico" placeholder="—" min="300" max="850">
+      </label>
+      <label>
+        <div style="font-size:0.8rem; color:var(--muted); margin-bottom:4px">Year in School</div>
+        <select id="year-in-school">
+          <option value="">— Select —</option>
+          <option value="">—</option>
+    <option value="1">1 - 1st Year Undergrad</option>
+    <option value="2">2 - 2nd Year Undergrad</option>
+    <option value="3">3 - 3rd Year Undergrad</option>
+    <option value="4">4 - 4th Year Undergrad</option>
+    <option value="5">5 - 5th Year Undergrad</option>
+    <option value="A">A - 1st Year Grad</option>
+    <option value="B">B - 2nd Year Grad</option>
+    <option value="C">C - 3rd Year Grad</option>
+    <option value="D">D - Beyond 3rd Year Grad</option>
+    <option value="Z">Z - Private; Unknown Grade</option>
+        </select>
+      </label>
+      <label>
+        <div style="font-size:0.8rem; color:var(--muted); margin-bottom:4px">Degree Type</div>
+        <select id="degree-type">
+          <option value="">— Select —</option>
+          <option value="STEM">STEM</option>
+          <option value="Business">Business</option>
+          <option value="Liberal Arts">Liberal Arts</option>
+          <option value="Professional">Professional (e.g. Nursing, Law)</option>
+          <option value="Other">Other</option>
+        </select>
+      </label>
+    </div>
+
+    <div style="display:flex; gap:12px; margin-top:32px;">
+      <button id="save-borrower-btn" style="flex:1; background:var(--green); color:white; border:none; padding:10px; border-radius:6px; font-weight:500;">Save Changes</button>
+      <button onclick="this.closest('#borrower-drawer').remove()" style="flex:1; padding:10px; border-radius:6px;">Close</button>
+    </div>
+  `;
+
+  document.body.appendChild(drawer);
+
+// ── Populate fields from global BORROWERS (already loaded in admin) ──
+let borrower = BORROWERS.find(b => b.borrowerId === borrowerId);
+
+if (!borrower) {
+  
+  // Use loanId as fallback name if loanName isn't available yet
+  const fallbackName = loanId || borrowerId;  // can be replaced with loanName later
+  borrower = ensureBorrowerExists(borrowerId, fallbackName);
+  
+  // Mark global dirty state so top "Save Changes" button activates
+  if (typeof markBorrowerDirty === 'function') {
+    markBorrowerDirty();
+  }
+}
+
+// Now borrower definitely exists → safely populate fields
+document.getElementById('borrower-fico').value = borrower.borrowerFico ?? '';
+document.getElementById('cosigner-fico').value = borrower.cosignerFico ?? '';
+
+// Map numeric yearInSchool (1–5) back to select option value
+const yearMap = { 1: '1', 2: '2', 3: '3', 4: '4', 5: '5' };
+document.getElementById('year-in-school').value = yearMap[borrower.yearInSchool] || '';
+
+// Degree type (defaults to empty)
+document.getElementById('degree-type').value = borrower.degreeType || '';
+
+// Optional: visual hint if this is a brand-new/empty record
+if (borrower.borrowerFico === null && !borrower.degreeType) {
+  const hint = document.createElement('small');
+  hint.style.color = 'var(--muted)';
+  hint.style.display = 'block';
+  hint.style.marginTop = '8px';
+  hint.textContent = '(New borrower profile – please fill in FICO and degree to save)';
+  // Append to a suitable parent (adjust selector if needed)
+  const parent = document.getElementById('degree-type')?.parentElement;
+  if (parent) parent.appendChild(hint);
+}
+
+// ── Save handler ───────────────────────────────────────────────────
+document.getElementById('save-borrower-btn').onclick = () => {
+// Collect updated values from form fields
+const updated = {
+  ...borrower,                              // First: keep all existing fields
+  borrowerId,                               // Ensure ID is preserved (redundant but safe)
+  borrowerFico:    Number(document.getElementById('borrower-fico').value)    || null,
+  cosignerFico:    Number(document.getElementById('cosigner-fico').value)    || null,
+  yearInSchool:    Number(document.getElementById('year-in-school').value)   || null,
+  degreeType:      document.getElementById('degree-type').value              || null,
+  // Add these two lines if you ever make school or name editable in the drawer later:
+  // school:       document.getElementById('school-select')?.value           || borrower.school,
+  // borrowerName: document.getElementById('borrower-name')?.value           || borrower.borrowerName,
+};
+// Update the local BORROWERS array immediately
+upsertBorrower(updated);
+// Mark the form as having unsaved changes → activates global "Save Changes" button
+if (typeof markBorrowerDirty === 'function') {
+markBorrowerDirty();
+} else {
+console.warn('markBorrowerDirty function not found — global save button may not activate');
+}
+// Provide clear feedback and close the drawer
+alert('Borrower changes have been saved locally.\n\n' +
+'Click "Save Changes" at the top of the page to commit everything to the server.');
+drawer.remove();
+};
+};
+
+
+
+
+const ADMIN_MODE = true;
+
+if (!ADMIN_MODE && (!window.curves || !curves.discount)) {
+  console.warn("Curves missing in admin - metrics will be limited");
+}
+  
+/* Render table */
+function renderTable() {
+  // Safety dedupe before render (prevents 2x rows)
+  const unique = [];
+  const seen = new Set();
+  currentLoans.forEach(l => {
+    if (!seen.has(l.loanId)) {
+      seen.add(l.loanId);
+      unique.push(l);
+    }
+  });
+  if (unique.length < currentLoans.length) {
+    console.warn(`Deduped ${currentLoans.length - unique.length} duplicate loans before render`);
+    currentLoans = unique;
+  }
+
+  sortLoans(); // Sort before rendering
+  const tbody = document.getElementById("loan-table-body");
+  tbody.innerHTML = "";
+  
+  if (!VALUATION_CURVES) {
+    tbody.innerHTML = '<tr><td colspan="13" style="text-align:center; color:#e53e3e;">Valuation curves not loaded — refresh or check console for errors</td></tr>';
+    return;
+  }
+
+  currentLoans.forEach((loan) => {
+    // Keep valuation computation if used elsewhere; remove table display
+    let valuation = { riskTier: "—", discountRate: NaN, npv: NaN, npvRatio: NaN };
+    try {
+      const borrower = getBorrowerForLoan(loan);
+      let profile = ACTIVE_PROFILE === "system" ? SYSTEM_PROFILE : USER_PROFILE;
+      valuation = valueLoan({ loan, borrower, riskFreeRate: 0.0423, profile });
+    } catch (err) {
+      console.error(`Valuation failed for ${loan.loanId || loan.loanName}:`, err);
+    }
+
+    // Grace years display: prefer graceYears or convert mosGraceElig
+    const graceYearsDisplay = loan.graceYears || 
+      (loan.mosGraceElig ? (loan.mosGraceElig / 12).toFixed(2) : '');
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${loan.loanId}</td>
+      <td><input type="text" value="${loan.loanName || ''}" data-field="loanName"></td>
+      <td>
+        <button class="ownership-pill" 
+                onclick="openBorrowerDrawer('${loan.borrowerId}', '${loan.loanId}', '${loan.loanName || ''}')" 
+                title="View borrower details">
+          ${loan.borrowerId}
+        </button>
+      </td>
+      <td data-action="ownership" style="cursor:pointer">
+        ${renderOwnershipCell(loan)}
+      </td>
+      <td>
+  <input 
+    type="text" 
+    value="${loan.school || ''}" 
+    data-field="school" 
+    list="school-datalist"
+    placeholder="Type or select school"
+    style="width: 180px;"
+  >
+  <datalist id="school-datalist">
+    ${schoolOptions.map(s => `<option value="${s}">${s}</option>`).join("")}
+  </datalist>
+</td>
+      <td>
+        <input type="date" value="${loan.loanStartDate || ''}" data-field="loanStartDate">
+      </td>
+      <td class="col-money">
+        <input type="number" step="0.01" value="${loan.principal || ''}" data-field="principal">
+      </td>
+      <td class="col-rate">
+        <input type="number" step="0.01" value="${((loan.nominalRate || loan.rate || 0) * 100).toFixed(2)}" data-field="nominalRate">
+      </td>
+      <td class="col-years">
+        <input type="number" step="1" value="${loan.termYears || ''}" data-field="termYears">
+      </td>
+      <td class="col-years">
+        <input type="number" step="0.1" value="${graceYearsDisplay}" data-field="graceYears">
+      </td>
+      <td>
+        <select data-field="loanStatus">
+          <option value="" ${!loan.loanStatus ? "selected" : ""}></option>
+          <option value="S" ${loan.loanStatus === "S" ? "selected" : ""}>School</option>
+          <option value="G" ${loan.loanStatus === "G" ? "selected" : ""}>Grace</option>
+          <option value="R" ${loan.loanStatus === "R" ? "selected" : ""}>Repayment</option>
+          <option value="D" ${loan.loanStatus === "D" ? "selected" : ""}>Deferment</option>
+          <option value="F" ${loan.loanStatus === "F" ? "selected" : ""}>Forebearance</option>
+          <option value="C" ${loan.loanStatus === "C" ? "selected" : ""}>Claim</option>
+          <option value="P" ${loan.loanStatus === "P" ? "selected" : ""}>Paid</option>
+        </select>
+      </td>
+      <td>
+        <select data-field="feeWaiver">
+          <option value="none" ${loan.feeWaiver === "none" ? "selected" : ""}>None</option>
+          <option value="setup" ${loan.feeWaiver === "setup" ? "selected" : ""}>Setup Only</option>
+          <option value="grace" ${loan.feeWaiver === "grace" ? "selected" : ""}>Setup & Grace</option>
+          <option value="all" ${loan.feeWaiver === "all" ? "selected" : ""}>All</option>
+        </select>
+      </td>
+      <td class="col-actions">
+        <button class="delete-btn events-btn ${loan.events?.length ? "has-events" : ""}" data-action="events">Events</button>
+        <button class="delete-btn" data-action="duplicate" style="margin-left:6px;">Duplicate</button>
+        <button class="delete-btn" data-action="delete" style="margin-left:6px;">Delete</button>
+      </td>
+    `;
+
+    tr.dataset.loanId = loan.loanId;
+    tbody.appendChild(tr);
+
+console.log("renderTable() just ran — current loan count:", currentLoans.length);
+  console.table(currentLoans.map(l => ({
+    loanId: l.loanId,
+    borrowerId: l.borrowerId,
+    loanName: l.loanName || "(no name)",
+    school: l.school || "(no school)"
+    
+  })));
+})}
+
+
+/* Collect from table */
+function collectLoans() {
+  const rows = document.querySelectorAll("#loan-table-body tr");
+  const list = [];
+
+  rows.forEach(row => {
+    const loanId = row.dataset.loanId;
+    const existing = currentLoans.find(l => String(l.loanId) === String(loanId));
+
+    const updated = {
+      loanId: loanId,
+      loanName: row.querySelector('[data-field="loanName"]').value.trim() || "",
+      school: row.querySelector('[data-field="school"]').value.trim() || "",
+      loanStartDate: row.querySelector('[data-field="loanStartDate"]').value || "",
+      principal: Number(row.querySelector('[data-field="principal"]').value) || 0,
+      nominalRate: Number(row.querySelector('[data-field="nominalRate"]').value) / 100 || 0,
+      termYears: Number(row.querySelector('[data-field="termYears"]').value) || 0,
+      graceYears: Number(row.querySelector('[data-field="graceYears"]').value) || 0,
+      loanStatus: row.querySelector('[data-field="loanStatus"]').value || "",
+      feeWaiver: row.querySelector('[data-field="feeWaiver"]').value || "none",
+
+      // Preserve non-editable fields
+      borrowerId: existing?.borrowerId || `BRW-${loanId}`,
+      events: Array.isArray(existing?.events) ? existing.events : [],
+      ownershipLots: Array.isArray(existing?.ownershipLots) ? structuredClone(existing.ownershipLots) : [],
+      
+      // Internal fallbacks for import/sync
+      dateOnSystem: existing?.dateOnSystem || "",
+      origPrincipalBal: existing?.origPrincipalBal || 0,
+      originalSchoolName: existing?.originalSchoolName || "",
+      mosGraceElig: Math.round(Number(row.querySelector('[data-field="graceYears"]').value) * 12) || 0
+    };
+
+    // Derive purchaseDate from ownership (same as normalizeLoan)
+    let derivedPurchaseDate = null;
+    if (Array.isArray(updated.ownershipLots) && updated.ownershipLots.length > 0) {
+      const dates = updated.ownershipLots
+        .map(lot => lot.purchaseDate?.trim())
+        .filter(d => d && /^\d{4}-\d{2}-\d{2}$/.test(d))
+        .sort();
+      derivedPurchaseDate = dates[0] || "";
+    }
+    updated.purchaseDate = derivedPurchaseDate || updated.loanStartDate || "";
+
+    list.push(updated);
+  });
+  return list;
+}
+
+  
+    /* Load from Worker */
+  const status = document.getElementById("status");
+
+async function loadFromBackend() {
+  const BACKEND_URL = "https://loan-valuation-api.jeff-263.workers.dev";
+  const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/jeff-stratofied/loan-valuation/main/data";
+  const statusEl = document.getElementById("status");
+
+  try {
+    // 1. Load Loans + FORCE DEDUPE by loanId
+    let loansData = null;
+    let loansSha = null;
+    try {
+      const res = await fetch(`${BACKEND_URL}/loans`, { cache: "no-store" });
+      if (!res.ok) throw new Error(`Loans fetch failed: ${res.status}`);
+      loansData = await res.json();
+      currentLoans = loansData.loans || [];
+      loansSha = loansData.sha || null;
+    } catch (err) {
+      console.warn("Loans API failed:", err);
+    }
+
+    // Dedupe: keep only first occurrence of each loanId
+    const seen = new Set();
+    currentLoans = currentLoans.filter(l => {
+      if (seen.has(l.loanId)) return false;
+      seen.add(l.loanId);
+      return true;
+    });
+    console.log(`After dedupe — ${currentLoans.length} unique loans`);
+
+    // Normalize
+    currentLoans = currentLoans.map(loan => {
+      loan.nominalRate = Number(loan.nominalRate ?? loan.rate ?? 0);
+      if (!loan.feeWaiver) loan.feeWaiver = "none";
+      return loan;
+    });
+
+    // Ensure borrowers exist
+    currentLoans.forEach(loan => {
+      if (loan.borrowerId) ensureBorrowerExists(loan.borrowerId, loan.loanName);
+    });
+
+    // 2. Load Borrowers
+    let borrowers = [];
+    let borrowersSha = null;
+    try {
+      const res = await fetch(`${BACKEND_URL}/borrowers`, { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        borrowers = Array.isArray(data.borrowers) ? data.borrowers : data;
+        borrowersSha = data.sha || null;
+      }
+    } catch (err) {
+      console.warn("Borrowers API failed:", err);
+    }
+
+    // GitHub fallback
+    if (borrowers.length === 0) {
+      try {
+        const res = await fetch(`${GITHUB_RAW_BASE}/borrowers.json`, { cache: "no-store" });
+        if (res.ok) borrowers = await res.json();
+      } catch (fbErr) {
+        console.warn("GitHub borrowers fallback failed:", fbErr);
+      }
+    }
+    BORROWERS.length = 0;
+    BORROWERS.push(...(Array.isArray(borrowers) ? borrowers : []));
+
+    // 3. Load Platform Config
+    let config = null;
+    try {
+      const res = await fetch(`${BACKEND_URL}/platformConfig`, { cache: "no-store" });
+      if (res.ok) config = await res.json();
+    } catch (err) {
+      console.warn("Platform config API failed:", err);
+    }
+
+    if (!config) {
+      try {
+        const res = await fetch(`${GITHUB_RAW_BASE}/platformConfig.json`, { cache: "no-store" });
+        if (res.ok) config = await res.json();
+      } catch (err) {
+        console.warn("GitHub config fallback failed:", err);
+      }
+    }
+
+    platformConfig = {
+      fees: {
+        setupFee: Number(config?.fees?.setupFee) || 150,
+        monthlyServicingBps: Number(config?.fees?.monthlyServicingBps) || 25
+      },
+      users: Array.isArray(config?.users) ? config.users : [
+        { id: "jeff", name: "Jeff", role: "lender", feeWaiver: "none", active: true },
+        { id: "nick", name: "Nick", role: "lender", feeWaiver: "all", active: true },
+        { id: "john", name: "John", role: "investor", feeWaiver: "none", active: true },
+        { id: "market", name: "Market", role: "market", feeWaiver: "none", active: true }
+      ]
+    };
+    platformConfigSha = config?.sha || null;
+
+    userFeeWaivers = {};
+    platformConfig.users.forEach(u => {
+      if (u?.id) userFeeWaivers[u.id] = u.feeWaiver ?? "none";
+    });
+
+    // 4. Valuation Curves
+    try {
+      await loadValuationCurves(`${BACKEND_URL}/valuationCurves`, { cache: "no-store" });
+    } catch (apiErr) {
+      console.warn("Valuation curves API failed:", apiErr);
+      try {
+        await loadValuationCurves(`${GITHUB_RAW_BASE}/valuationCurves.json`, { cache: "no-store" });
+      } catch (fbErr) {
+        console.error("Valuation curves fallback failed:", fbErr);
+      }
+    }
+
+    // 5. School Tiers
+    try {
+      const res = await fetch(`${BACKEND_URL}/schoolTiers`, { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && typeof data === "object" && !Array.isArray(data)) {
+          SCHOOLTIERS = data;
+        } else if (Array.isArray(data)) {
+          SCHOOLTIERS = {};
+          data.forEach(item => { if (item.opeid) SCHOOLTIERS[item.opeid] = item; });
+        }
+      }
+    } catch (err) {
+      console.warn("School tiers API failed:", err);
+      try {
+        const fbRes = await fetch(`${GITHUB_RAW_BASE}/schoolTiers.json`, { cache: "no-store" });
+        if (fbRes.ok) {
+          const fbData = await fbRes.json();
+          if (fbData && typeof fbData === "object" && !Array.isArray(fbData)) {
+            SCHOOLTIERS = fbData;
+          } else if (Array.isArray(fbData)) {
+            SCHOOLTIERS = {};
+            fbData.forEach(item => { if (item.opeid) SCHOOLTIERS[item.opeid] = item; });
+          }
+        }
+      } catch (fbErr) {
+        console.warn("School tiers fallback failed:", fbErr);
+      }
+    }
+    window.SCHOOLTIERS = SCHOOLTIERS;
+
+    // 6. Risk & Value Config
+    try {
+      const res = await fetch(`${BACKEND_URL}/config`, { cache: "no-store" });
+      if (res.ok) {
+        window.SYSTEM_RISK_CONFIG = await res.json();
+      } else {
+        window.SYSTEM_RISK_CONFIG = { ...RISK_VALUE_DEFAULTS };
+      }
+    } catch (err) {
+      console.error("Risk config load failed:", err);
+      window.SYSTEM_RISK_CONFIG = { ...RISK_VALUE_DEFAULTS };
+    }
+
+    // Final render
+    renderTable();
+    if (statusEl) {
+      statusEl.textContent = `Loaded ${currentLoans.length} loans • ${BORROWERS.length} borrowers`;
+    }
+
+  } catch (criticalErr) {
+    console.error("Critical load failure:", criticalErr);
+    if (statusEl) {
+      statusEl.textContent = "Failed to load core data – check console";
+      statusEl.style.color = "var(--red, #ef4444)";
+    }
+  }
+}
+
+
+/* Save to Worker */
+async function saveToBackend() {
+  const status = document.getElementById("status") || { textContent: "" };
+  status.textContent = "Saving…";
+
+// SHA values — loaded once on page init, updated after every successful save
+  
+  let savedLoans = false;
+  let savedBorrowers = false;
+  let savedConfig = false;
+
+  const updated = collectLoans();
+
+  // =====================================================
+  // VALIDATION — block saving invalid or missing values
+  // =====================================================
+  for (const loan of updated) {
+    const loanDisplay = loan.loanName || loan.loanId || "(unnamed loan)";
+
+    // Principal validation
+    if (loan.principal === "" || loan.principal === null || Number(loan.principal) <= 0) {
+      alert(`Loan "${loanDisplay}" must have an Original Loan Amount greater than 0.`);
+      status.textContent = "Save blocked";
+      return;
+    }
+
+    // Start date validation
+    if (!loan.loanStartDate || loan.loanStartDate === "") {
+      alert(`Loan "${loanDisplay}" is missing a Loan Start Date.`);
+      status.textContent = "Save blocked";
+      return;
+    }
+
+    // Default events validation
+    const defaults = loan.events?.filter(e => e.type === "default") || [];
+
+    if (defaults.length > 1) {
+      alert(`Loan "${loanDisplay}" has more than one Default event.`);
+      status.textContent = "Save blocked";
+      return;
+    }
+
+    if (defaults.length === 1) {
+      const d = defaults[0];
+
+      if (!d.date) {
+        alert(`Loan "${loanDisplay}" default is missing a date.`);
+        status.textContent = "Save blocked";
+        return;
+      }
+
+      if (d.recoveryAmount == null || d.recoveryAmount < 0) {
+        alert(`Loan "${loanDisplay}" default recovery amount must be $0 or more.`);
+        status.textContent = "Save blocked";
+        return;
+      }
+    }
+
+    // Ownership lots validation
+    if (!Array.isArray(loan.ownershipLots) || loan.ownershipLots.length === 0) {
+      alert(`Loan "${loanDisplay}" has no ownership lots.`);
+      status.textContent = "Save blocked";
+      return;
+    }
+
+    const sum = loan.ownershipLots.reduce((s, l) => s + (Number(l.pct) || 0), 0);
+    if (Math.abs(sum - 1) > 0.0001) {
+      alert(`Loan "${loanDisplay}" ownership must total 100%.`);
+      status.textContent = "Save blocked";
+      return;
+    }
+
+    for (const lot of loan.ownershipLots) {
+      if (!lot.user || !lot.purchaseDate || lot.pct <= 0) {
+        alert(`Loan "${loanDisplay}" has an invalid ownership lot.`);
+        status.textContent = "Save blocked";
+        return;
+      }
+    }
+  }
+
+  // Clean up legacy fields before saving
+  updated.forEach(loan => {
+    delete loan.user;
+    delete loan.purchasePrice; // keep this if still legacy
+    // NO delete loan.purchaseDate here — good!
+  });
+
+  // =====================================================
+  // UPDATE PLATFORM CONFIG WITH NEW FEE WAIVERS
+  // =====================================================
+  let configUpdated = false;
+  if (platformConfig && platformConfig.users) {
+    platformConfig.users = platformConfig.users.map(user => {
+      if (user.id in userFeeWaivers && user.feeWaiver !== userFeeWaivers[user.id]) {
+        configUpdated = true;
+        return { ...user, feeWaiver: userFeeWaivers[user.id] };
+      }
+      return user;
+    });
+  }
+
+  try {
+
+    // Save loans if dirty
+    if (hasUnsavedChanges) {
+      const loansRes = await fetch(`${BACKEND_URL}/loans`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ loans: updated, sha: loansSha })
+      });
+
+      if (!loansRes.ok) {
+        const err = await loansRes.json().catch(() => ({}));
+        throw new Error(`Loans save failed: ${err.message || "unknown error"}`);
+      }
+
+      const loansData = await loansRes.json();
+      if (loansData.sha) loansSha = loansData.sha;
+      savedLoans = true;
+    }
+
+    // Save borrowers if dirty
+    if (hasBorrowerChanges) {
+      const body = {
+        borrowers: BORROWERS,
+        sha: borrowersSha
+      };
+      const res = await fetch(`${BACKEND_URL}/borrowers`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+
+      if (!res.ok) {
+        throw new Error(await res.text() || "Borrowers save failed");
+      }
+
+      const data = await res.json();
+      if (data.sha) borrowersSha = data.sha;
+      savedBorrowers = true;
+    }
+
+    // Save platform config if updated (with fresh SHA)
+    if (configUpdated) {
+      // Get fresh SHA to avoid conflicts
+      let freshSha = platformConfigSha;
+      try {
+        const freshConfigRes = await fetch(`${BACKEND_URL}/platformConfig`, {
+          cache: "no-store"
+        });
+        if (freshConfigRes.ok) {
+          const freshData = await freshConfigRes.json();
+          freshSha = freshData.sha || freshSha;
+        } else {
+          console.warn("Fresh config SHA fetch failed, using known SHA");
+        }
+      } catch (shaErr) {
+        console.warn("Failed to fetch fresh SHA for config:", shaErr);
+      }
+
+      // Sync waivers again (defensive)
+      if (platformConfig && platformConfig.users) {
+        platformConfig.users = platformConfig.users.map(user => {
+          if (user.id in userFeeWaivers) {
+            return { ...user, feeWaiver: userFeeWaivers[user.id] };
+          }
+          return user;
+        });
+      }
+
+      const configBody = {
+        fees: platformConfig.fees,
+        users: platformConfig.users,
+        sha: freshSha
+      };
+
+      const configRes = await fetch(`${BACKEND_URL}/platformConfig`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(configBody)
+      });
+
+      if (!configRes.ok) {
+        const errData = await configRes.json().catch(() => ({}));
+        console.error("Config save failed:", errData);
+        status.textContent = "Config save failed (fees/waivers not saved)";
+      } else {
+        const configData = await configRes.json();
+        if (configData.sha) {
+          platformConfigSha = configData.sha;
+        }
+        savedConfig = true;
+      }
+    }
+
+    // Final feedback
+    if (savedLoans || savedBorrowers || savedConfig) {
+      clearDirty();
+      status.textContent = "Saved ✔";
+      alert("Changes saved!");
+    } else {
+      status.textContent = "No changes to save";
+    }
+  } catch (err) {
+    console.error("Save error:", err);
+    status.textContent = "Save failed";
+    alert("Save failed: " + (err.message || "Unknown error"));
+  }
+}
+
+document.getElementById("save-btn")?.addEventListener("click", () => {
+  saveToBackend();
+});
+  
+  // =====================================================
+// GLOBAL DIRTY TRACKING FOR TABLE EDITS
+// =====================================================
+const loanTable = document.getElementById("loan-table");
+
+// Fires while typing (text / number inputs)
+loanTable.addEventListener("input", (e) => {
+  if (e.target.matches("[data-field]")) {
+    markDirty();
+  }
+});
+
+// Fires on blur / dropdown changes
+loanTable.addEventListener("change", (e) => {
+  if (e.target.matches("[data-field]")) {
+    markDirty();
+  }
+});
+
+
+  // ────────────────────────────────────────────────
+  // Fee Management button listener (OUTSIDE table click)
+  // ────────────────────────────────────────────────
+  document.getElementById("fee-management-btn")?.addEventListener("click", openUserManagementDrawer);;
+
+  // Table click handler — only for table actions
+  document.getElementById("loan-table").addEventListener("click", (e) => {
+    const actionEl = e.target.closest("[data-action]");
+    if (!actionEl) return;
+
+    const action = actionEl.dataset.action;
+    const row = actionEl.closest("tr");
+
+    const idx = Array.from(row.parentNode.children).indexOf(row);
+    
+    if (action === "events") {
+      const loan = currentLoans[idx];
+      openEventsDrawer(loan);
+      return;
+    }
+
+    if (action === "ownership") {
+      const loan = currentLoans[idx];
+      openOwnershipDrawer(loan);
+      return;
+    }
+    
+    if (action === "delete") {
+      if (!confirm("Delete this loan?")) return;
+      currentLoans.splice(idx, 1);
+      renderTable();
+      markDirty();
+      return;
+    }
+
+    if (action === "duplicate") {
+      const clone = { ...currentLoans[idx] };
+      const existingIds = new Set(currentLoans.map(l => String(l.loanId)));
+      let newId;
+      do {
+        newId = generateLoanId();
+      } while (existingIds.has(newId));
+      clone.loanId = newId;
+      clone.loanName = clone.loanName + " (Copy)";
+      currentLoans.push(clone);
+      renderTable();
+      return;
+    }
+  });
+
+
+// Risk/Value Drawer controls
+document.addEventListener("DOMContentLoaded", () => {
+  const openBtn  = document.getElementById("openRiskValueBtn");   // or "open-admin-drawer"
+  const drawer   = document.getElementById("riskValueDrawer");
+  const closeBtn = document.getElementById("closeRiskValueBtn");
+  const saveBtn  = document.getElementById("saveRiskValueBtn");
+
+  if (openBtn && drawer) {
+    openBtn.addEventListener("click", () => {
+      drawer.classList.remove("hidden");
+      loadRiskValueControls();  // populate fields on open
+    });
+  }
+
+  if (closeBtn && drawer) {
+    closeBtn.addEventListener("click", () => drawer.classList.add("hidden"));
+  }
+
+  if (saveBtn) {
+    saveBtn.addEventListener("click", saveRiskValueControls);
+  }
+// ────────────────────────────────────────────────
+  // School Tier +/- buttons
+  // ────────────────────────────────────────────────
+  document.querySelectorAll('.increment-btn[data-target^="school-tier-"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.dataset.target;
+      const numberInput = document.getElementById(targetId);
+      if (!numberInput) return;
+
+      let val = parseFloat(numberInput.value) || 1.0;
+      const step = parseFloat(numberInput.step) || 0.05;
+      
+      val = btn.dataset.dir === '+' ? val + step : val - step;
+      val = Math.max(parseFloat(numberInput.min), Math.min(parseFloat(numberInput.max), val));
+
+      numberInput.value = val.toFixed(2);
+
+      const rangeInput = document.getElementById(targetId + '-range');
+      if (rangeInput) rangeInput.value = val;
+
+      hasChanges = true;
+      document.getElementById('saveRiskValueBtn')?.removeAttribute('disabled');
+    });
+  });
+
+  // Sync number ↔ range for school tiers
+  ['a','b','c','d'].forEach(tier => {
+    const numInput = document.getElementById(`school-tier-${tier}`);
+    const rangeInput = document.getElementById(`school-tier-${tier}-range`);
+    
+    if (!numInput || !rangeInput) return;
+
+    numInput.addEventListener('input', () => {
+      let val = parseFloat(numInput.value);
+      if (isNaN(val)) val = 1.0;
+      val = Math.max(parseFloat(numInput.min), Math.min(parseFloat(numInput.max), val));
+      rangeInput.value = val;
+      numInput.value = val.toFixed(2);
+      hasChanges = true;
+      document.getElementById('saveRiskValueBtn')?.removeAttribute('disabled');
+    });
+
+    rangeInput.addEventListener('input', () => {
+      numInput.value = parseFloat(rangeInput.value).toFixed(2);
+      hasChanges = true;
+      document.getElementById('saveRiskValueBtn')?.removeAttribute('disabled');
+    });
+  });
+});
+
+  
+  /* ===========================
+     THEME TOGGLE
+     =========================== */
+  const themeToggle = document.getElementById("themeToggle");
+
+  function applyTheme(t) {
+    document.documentElement.setAttribute("data-theme", t);
+    themeToggle.textContent = t === "dark" ? "🌙" : "☀️";
+    localStorage.setItem("admin-theme", t);
+  }
+
+  themeToggle.onclick = () => {
+    const newTheme = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    applyTheme(newTheme);
+  };
+
+  const savedTheme = localStorage.getItem("admin-theme") || "light";
+  applyTheme(savedTheme);
+
+  // Sorting setup
+  document.querySelectorAll('#loan-table thead th.sortable').forEach(th => {
+    th.onclick = () => {
+      const field = th.dataset.field;
+      if (sortColumn === field) {
+        sortDirection = -sortDirection;
+      } else {
+        sortColumn = field;
+        sortDirection = 1;
+      }
+
+      // Clear arrows from all headers
+      document.querySelectorAll('#loan-table thead th').forEach(t => {
+        t.innerHTML = t.innerHTML.replace(/ [↑↓]$/, '');
+      });
+
+      // Add arrow to current header
+      th.innerHTML += ` ${sortDirection === 1 ? '↑' : '↓'}`;
+
+      renderTable();
+    };
+  });
+
+  loadFromBackend();
+
+  // Add Port Dashboard link logic
+  const portBtn = document.getElementById('port-btn');
+  const userSelect = document.getElementById('admin-user-select');
+
+  portBtn.onclick = () => {
+    const user = userSelect.value;
+    window.open(`/loan-valuation/reporting.html?user=${user}`, '_blank');
+  };
+
+const guideBtn = document.getElementById("userGuideBtn");
+const guideDrawer = document.getElementById("userGuideDrawer");
+const guideOverlay = document.getElementById("userGuideOverlay");
+const closeGuide = document.getElementById("closeGuide");
+const guideContent = document.getElementById("guideContent");
+
+async function loadUserGuide() {
+  const res = await fetch("./docs/USER_GUIDE.md");
+  const md = await res.text();
+  guideContent.innerHTML = marked.parse(md);
+}
+
+guideBtn?.addEventListener("click", async () => {
+  guideDrawer.classList.remove("hidden");
+  guideOverlay.classList.remove("hidden");
+  await loadUserGuide();
+});
+
+function closeGuideFn() {
+  guideDrawer.classList.add("hidden");
+  guideOverlay.classList.add("hidden");
+}
+
+closeGuide?.addEventListener("click", closeGuideFn);
+guideOverlay?.addEventListener("click", closeGuideFn);
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeGuideFn();
+});
+
+// Make SCHOOLTIERS available to valuationEngine.js
+window.SCHOOLTIERS = SCHOOLTIERS;
+
+
+// ────────────────────────────────────────────────
+// Risk & Value Config Drawer Logic
+// ────────────────────────────────────────────────
+
+const CONFIG_API_URL = "https://loan-valuation-api.jeff-263.workers.dev/config";
+
+const RISK_VALUE_KEYS = [
+  { id: 'risk-premium-low',        path: ['riskPremiumBps', 'LOW'],        type: 'int'   },
+  { id: 'risk-premium-medium',     path: ['riskPremiumBps', 'MEDIUM'],     type: 'int'   },
+  { id: 'risk-premium-high',       path: ['riskPremiumBps', 'HIGH'],       type: 'int'   },
+  { id: 'risk-premium-very-high',  path: ['riskPremiumBps', 'VERY_HIGH'],  type: 'int'   },
+  { id: 'recovery-rate-low',       path: ['recoveryRate', 'LOW'],          type: 'int'   },
+  { id: 'recovery-rate-medium',    path: ['recoveryRate', 'MEDIUM'],       type: 'int'   },
+  { id: 'recovery-rate-high',      path: ['recoveryRate', 'HIGH'],         type: 'int'   },
+  { id: 'recovery-rate-very-high', path: ['recoveryRate', 'VERY_HIGH'],    type: 'int'   },
+  { id: 'prepayment-multiplier',   path: ['prepaymentMultiplier'],         type: 'float' },
+  { id: 'prepay-seasoning',        path: ['prepaySeasoning'],              type: 'float' },
+  { id: 'graduation-rate-threshold', path: ['graduationRateThreshold'],    type: 'int'   },
+  { id: 'earnings-threshold',      path: ['earningsThreshold'],            type: 'int'   },
+  { id: 'fico-borrower',           path: ['ficoBorrowerAdjustment'],       type: 'int'   },
+  { id: 'fico-cosigner',           path: ['ficoCosignerAdjustment'],       type: 'int'   },
+  { id: 'base-risk-free-rate',     path: ['baseRiskFreeRate'],             type: 'float' },
+  { id: 'cdr-multiplier',          path: ['cdrMultiplier'],                type: 'float' },
+  { id: 'inflation-assumption',    path: ['inflationAssumption'],          type: 'float' },
+  { id: 'school-tier-multiplier',  path: ['schoolTierMultiplier'],         type: 'string'}
+];
+
+
+  
+// Define originals, descriptions, references, units
+const RISK_VALUE_META = {
+  'risk-premium-low':        { original: 250, unit: ' bps', desc: 'Extra discount for LOW-risk; higher lowers NPV for high-quality loans.', ref: 'Moody\'s Student Loan ABS Methodology' },
+  'risk-premium-medium':     { original: 350, unit: ' bps', desc: 'For MEDIUM-risk (majority); impacts portfolio NPV most.', ref: 'S&P Private Student Loan Benchmarks' },
+  'risk-premium-high':       { original: 550, unit: ' bps', desc: 'For HIGH-risk; quickly reduces value of marginal loans.', ref: 'CFPB Private Student Loan Reports' },
+  'risk-premium-very-high':  { original: 750, unit: ' bps', desc: 'For VERY HIGH-risk; heavily penalizes subprime.', ref: 'Navient ABS Disclosures' },
+  'recovery-rate-low':       { original: 30,  unit: '%', desc: 'Recovery for LOW-risk; lower increases expected loss.', ref: 'Moody\'s Ultimate Recovery Database' },
+  'recovery-rate-medium':    { original: 22,  unit: '%', desc: 'For MEDIUM; biggest impact on average losses.', ref: 'S&P Loss Severity Ratings' },
+  'recovery-rate-high':      { original: 15,  unit: '%', desc: 'For HIGH; reduces value for riskier loans.', ref: 'CFPB Default Studies' },
+  'recovery-rate-very-high': { original: 10,  unit: '%', desc: 'For VERY HIGH; amplifies subprime losses.', ref: 'Fitch Ratings Student Loan ABS' },
+  'prepayment-multiplier':   { original: 1.0, unit: '', desc: '>1 speeds payoffs, lowers NPV; <1 extends yield.', ref: 'S&P Student Loan ABS Cash Flow Modeling' },
+  'prepay-seasoning':        { original: 2.5, unit: ' years', desc: 'Delays prepays; longer increases duration/risk.', ref: 'ABS Prepayment Disclosures' },
+  'graduation-rate-threshold': { original: 75, unit: '%', desc: 'Higher shortens duration, reduces NPV.', ref: 'ED College Scorecard Metrics' },
+  'earnings-threshold':      { original: 70000, unit: '$', desc: 'Higher makes repayment conservative, lowers NPV.', ref: 'Georgetown CEW Debt-to-Earnings Test' },
+  'fico-borrower':           { original: 50, unit: ' bps', desc: 'Rewards higher FICO; positive lowers premium.', ref: 'FICO Correlation Studies' },
+  'fico-cosigner':           { original: 25, unit: ' bps', desc: 'Lower weight if present; ignores if absent.', ref: 'CFPB Private Student Loan Reports' },
+  'base-risk-free-rate':     { original: 4.25, unit: '%', desc: 'Foundation for discount; higher lowers all NPV.', ref: 'US Treasury 10-Year Yield' },
+  'cdr-multiplier':          { original: 1.0, unit: '', desc: 'Scales defaults; >1 increases conservatism.', ref: 'ED Cohort Default Rate Guide' },
+  'inflation-assumption':    { original: 3.0, unit: '%', desc: 'Adjusts future cash; higher erodes real value.', ref: 'Fed Inflation Targets' },
+  'school-tier-multiplier':  { original: 'A:0.8, B:1.0, C:1.3, D:1.5', unit: '', desc: 'Scales risk by tier; higher penalizes lower tiers.', ref: 'ED College Scorecard Tiers' }
+};
+
+// Updated load function
+async function loadRiskValueControls() {
+  try {
+    const res = await fetch(CONFIG_API_URL, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`Load failed: ${res.status}`);
+    const data = await res.json();
+    currentRiskConfigSha = data.sha;
+
+    // Load all standard single-value fields
+        // Load standard scalar inputs
+    RISK_VALUE_KEYS.forEach(({ id, path }) => {
+      const input = document.getElementById(id);
+      if (!input) return;
+      let value = data;
+      for (const p of path) value = value?.[p];
+      input.value = value ?? RISK_VALUE_META[id]?.original ?? '';
+    });
+
+const m = data.schoolTierMultiplier || { A: 0.8, B: 1.0, C: 1.3, D: 1.5 };
+
+document.getElementById('school-tier-a').value = Number(m.A ?? 0.8).toFixed(2);
+document.getElementById('school-tier-b').value = Number(m.B ?? 1.0).toFixed(2);
+document.getElementById('school-tier-c').value = Number(m.C ?? 1.3).toFixed(2);
+document.getElementById('school-tier-d').value = Number(m.D ?? 1.5).toFixed(2);
+
+// Force sync ranges (prevents empty sliders)
+['a','b','c','d'].forEach(tier => {
+  const num = document.getElementById(`school-tier-${tier}`);
+  const rng = document.getElementById(`school-tier-${tier}-range`);
+  if (num && rng && num.value) {
+    rng.value = num.value;
+  }
+});
+
+    // Load prepayment controls
+const prepayMultiplierInput = document.getElementById('prepayment-multiplier');
+const prepaySeasoningInput = document.getElementById('prepay-seasoning');
+
+if (prepayMultiplierInput) {
+  prepayMultiplierInput.value = data.prepaymentMultiplier ?? 1.0;
+}
+
+if (prepaySeasoningInput) {
+  prepaySeasoningInput.value = data.prepaySeasoningYears ?? 2.5;
+}
+
+  } catch (err) {
+    console.error('Failed to load risk config:', err);
+  }
+}
+
+async function saveRiskValueControls() {
+  console.log("Saving risk & value controls...");
+
+  const config = {
+    metadata: {
+      lastUpdated: new Date().toISOString(),
+      updatedBy: "admin",
+      version: "1.2.0"
+    },
+    riskPremiumBps: {
+      LOW: Number(document.getElementById('risk-premium-low').value) || 250,
+      MEDIUM: Number(document.getElementById('risk-premium-medium').value) || 350,
+      HIGH: Number(document.getElementById('risk-premium-high').value) || 550,
+      VERY_HIGH: Number(document.getElementById('risk-premium-very-high').value) || 750
+    },
+    recoveryRate: {
+      LOW: Number(document.getElementById('recovery-rate-low').value) || 30,
+      MEDIUM: Number(document.getElementById('recovery-rate-medium').value) || 22,
+      HIGH: Number(document.getElementById('recovery-rate-high').value) || 15,
+      VERY_HIGH: Number(document.getElementById('recovery-rate-very-high').value) || 10
+    },
+    ficoBorrowerAdjustment: Number(document.getElementById('fico-borrower').value) || 50,
+    ficoCosignerAdjustment: Number(document.getElementById('fico-cosigner').value) || 25,
+    prepaymentMultiplier: Number(document.getElementById('prepayment-multiplier').value) || 1.0,
+    prepaySeasoningYears: Number(document.getElementById('prepay-seasoning').value) || 2.5,
+    graduationRateThreshold: Number(document.getElementById('graduation-rate-threshold').value) || 75,
+    earningsThreshold: Number(document.getElementById('earnings-threshold').value) || 70000,
+    baseRiskFreeRate: Number(document.getElementById('base-risk-free-rate').value) || 4.25,
+    cdrMultiplier: Number(document.getElementById('cdr-multiplier').value) || 1.0,
+    inflationAssumption: Number(document.getElementById('inflation-assumption').value) || 3.0,
+    schoolTierMultiplier: {
+      A: Number(document.getElementById('school-tier-a').value) || 0.8,
+      B: Number(document.getElementById('school-tier-b').value) || 1.0,
+      C: Number(document.getElementById('school-tier-c').value) || 1.3,
+      D: Number(document.getElementById('school-tier-d').value) || 1.5
+    }
+  };
+
+  try {
+    const res = await fetch("https://loan-valuation-api.jeff-263.workers.dev/config", {
+      method: 'POST',
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...config,
+        sha: currentRiskConfigSha
+      })
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.message || `HTTP ${res.status}`);
+    }
+
+    const result = await res.json();
+    currentRiskConfigSha = result.sha || currentRiskConfigSha;
+
+    alert("✅ Risk & Value Controls (including FICO adjustments) saved successfully!");
+    document.getElementById('riskValueDrawer').classList.add('hidden');
+
+    // Refresh drawer values
+    await loadRiskValueControls();
+
+  } catch (err) {
+    console.error("Save error:", err);
+    alert("Save failed: " + err.message + "\nCheck console for details.");
+  }
+}
+
+// ────────────────────────────────────────────────
+// School Tier Multiplier — 4 separate fields
+// ────────────────────────────────────────────────
+
+function loadSchoolTierMultipliers(config) {
+  const m = config.schoolTierMultiplier || { A: 0.8, B: 1.0, C: 1.3, D: 1.5 };
+  document.getElementById('school-tier-a').value = (m.A ?? 0.8).toFixed(2);
+  document.getElementById('school-tier-b').value = (m.B ?? 1.0).toFixed(2);
+  document.getElementById('school-tier-c').value = (m.C ?? 1.3).toFixed(2);
+  document.getElementById('school-tier-d').value = (m.D ?? 1.5).toFixed(2);
+
+  // Also sync sliders
+  ['a','b','c','d'].forEach(t => {
+    const num = document.getElementById(`school-tier-${t}`);
+    const rng = document.getElementById(`school-tier-${t}-range`);
+    if (rng && num) rng.value = num.value;
+  });
+}
+
+function saveSchoolTierMultipliers() {
+  return {
+    A: Number(document.getElementById('school-tier-a')?.value) || 0.8,
+    B: Number(document.getElementById('school-tier-b')?.value) || 1.0,
+    C: Number(document.getElementById('school-tier-c')?.value) || 1.3,
+    D: Number(document.getElementById('school-tier-d')?.value) || 1.5
+  };
+}
+
+  
+// Wire buttons (runs once on load)
+document.addEventListener("DOMContentLoaded", () => {
+  const openBtn  = document.getElementById("openRiskValueBtn");  // your button id
+  const drawer   = document.getElementById("riskValueDrawer");
+  const closeBtn = document.getElementById("closeRiskValueBtn");
+  const saveBtn  = document.getElementById("saveRiskValueBtn");
+
+  if (openBtn && drawer) {
+    openBtn.addEventListener("click", () => {
+      drawer.classList.remove("hidden");
+      loadRiskValueControls();
+    });
+  }
+
+  if (closeBtn && drawer) {
+    closeBtn.addEventListener("click", () => drawer.classList.add("hidden"));
+  }
+
+  if (saveBtn) {
+    saveBtn.addEventListener("click", saveRiskValueControls);
+  }
+});
+
+async function saveBorrowers() {
+  try {
+    const res = await fetch(`${BACKEND_URL}/borrowers`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ borrowers: BORROWERS, sha: borrowersSha })
+    });
+    if (!res.ok) throw new Error(`Borrowers save failed: ${res.status}`);
+    const data = await res.json();
+    if (data.sha) borrowersSha = data.sha;
+    console.log("Borrowers saved");
+  } catch (err) {
+    console.error("Failed to save borrowers:", err);
+  }
+}
+
+  
+// ===========================
+// CSV IMPORT — FINAL (updates borrowers + saves them + prevents duplicates)
+// ===========================
+document.getElementById("import-csv-btn").addEventListener("click", () => {
+  document.getElementById("csv-file-input").click();
+});
+
+document.getElementById("csv-file-input").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  try {
+    const text = await file.text();
+    const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
+    const headers = lines[0].split(',').map(h => h.trim().toUpperCase());
+
+    const importedLoans = lines.slice(1)
+      .filter(line => line.trim() !== "" && !line.startsWith(",,,"))
+      .map(line => {
+        const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+        const row = {};
+        headers.forEach((h, i) => row[h] = values[i] || "");
+
+        let startDate = row["DATE_ON_SYSTEM"] || "";
+        if (/^\d{8}$/.test(startDate)) {
+          startDate = startDate.replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3');
+        }
+
+        return {
+          loanId: row["PROM_NOTE_ID"] || generateLoanId(),
+          borrowerId: row["BORROWER_ID"] || `BRW-${generateLoanId()}`,
+          loanName: row["LOAN_NAME"] || "",
+          school: row["ORIGINAL_SCHOOL_NAME"]?.trim() || "",
+          loanStartDate: startDate,
+          principal: Number(row["ORIG_PRINCIPAL_BAL"] || 0),
+          nominalRate: Number(row["LOAN_INT_RATE"] || 0) / 100,
+          termYears: row["TERM"] ? Math.ceil(Number(row["TERM"]) / 12) : 10,
+          graceYears: row["MOS_GRACE_ELIG"] ? Number(row["MOS_GRACE_ELIG"]) / 12 : 0,
+          loanStatus: row["LOAN_STATUS"] || "",
+          feeWaiver: "none",
+          events: [],
+          ownershipLots: [{
+            user: "market",
+            pct: 1,
+            purchaseDate: startDate || new Date().toISOString().split('T')[0]
+          }],
+          user: "market",
+          appScore: row["APP_SCORE"] ? Number(row["APP_SCORE"]) : null,
+          yearInSchool: row["YEAR_IN_SCHOOL"] || null
+        };
+      });
+
+    const borrowerFicoMap = new Map();
+
+    // Merge/update existing loans, add new ones
+    importedLoans.forEach(imported => {
+      const idx = currentLoans.findIndex(l => l.loanId === imported.loanId);
+      if (idx !== -1) {
+        // Update existing loan (preserve ownershipLots & events)
+        currentLoans[idx] = {
+          ...currentLoans[idx],
+          ...imported,
+          ownershipLots: currentLoans[idx].ownershipLots || imported.ownershipLots,
+          events: currentLoans[idx].events || []
+        };
+      } else {
+        // Add new loan
+        currentLoans.push(imported);
+      }
+
+      // Track highest FICO per borrower
+      if (imported.borrowerId && imported.appScore) {
+        const currentMax = borrowerFicoMap.get(imported.borrowerId) || 0;
+        borrowerFicoMap.set(imported.borrowerId, Math.max(currentMax, imported.appScore));
+      }
+    });
+
+    // Apply highest FICO to borrowers
+    borrowerFicoMap.forEach((highestFico, borrowerId) => {
+      let borrower = BORROWERS.find(b => b.borrowerId === borrowerId);
+      if (!borrower) borrower = ensureBorrowerExists(borrowerId, "Imported Borrower");
+      borrower.borrowerFico = highestFico;
+    });
+
+    if (borrowerFicoMap.size > 0) {
+      await saveBorrowers();
+    }
+
+    // Final dedupe (safety net — should never trigger if data is clean)
+    const seen = new Set();
+    currentLoans = currentLoans.filter(l => {
+      if (seen.has(l.loanId)) return false;
+      seen.add(l.loanId);
+      return true;
+    });
+
+    renderTable();
+    markDirty();
+    alert(`✅ Imported/Updated ${importedLoans.length} loans!\nHighest FICO saved`);
+
+  } catch (err) {
+    alert("Import failed: " + err.message);
+    console.error(err);
+  }
+
+  e.target.value = ""; // reset file input
+});
+  
+  
+</script>
+
+<script src="/loan-valuation/feedback.js?v=dev"></script>
+
+<!-- User Guide Overlay -->
+<div id="userGuideOverlay" class="guide-overlay hidden"></div>
+
+<!-- User Guide Drawer -->
+<aside id="userGuideDrawer" class="guide-drawer hidden">
+  <div class="guide-header">
+    <h2>Loan Admin – User Guide</h2>
+    <button id="closeGuide">✕</button>
+  </div>
+
+  <div id="guideContent" class="guide-content">
+    Loading guide…
+  </div>
+</aside>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  
+</body>
+</html>
