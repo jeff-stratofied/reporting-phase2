@@ -813,22 +813,22 @@ input:focus, select:focus {
      SCRIPT: FUNCTIONALITY (from working WrongColors version)
      ========================================================= -->
 <script type="module">
-const BACKEND_URL = "https://loan-valuation-api.jeff-263.workers.dev";
+const BACKEND_URL = "https://reporting-phase2-api.jeff-263.workers.dev";
   
-  import { loadLoans } from "/loan-valuation/loadLoans.js?v=dev";
+  import { loadLoans } from "/reporting-phase2/loadLoans.js?v=dev";
 
-  import { normalizeOwnership } from "/loan-valuation/ownershipEngine.js?v=dev";
+  import { normalizeOwnership } from "/reporting-phase2/ownershipEngine.js?v=dev";
 
   import {
   BORROWERS,
   getBorrowerById,
   upsertBorrower,
   ensureBorrowerExists
-} from "/loan-valuation/borrowerStore.js?v=dev";
+} from "/reporting-phase2/borrowerStore.js?v=dev";
 
-import { valueLoan, loadValuationCurves, VALUATION_CURVES } from "/loan-valuation/valuationEngine.js?v=dev";
+import { valueLoan, loadValuationCurves, VALUATION_CURVES } from "/reporting-phase2/valuationEngine.js?v=dev";
 
-const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/jeff-stratofied/loan-valuation/main/data";
+const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/jeff-stratofied/reporting-phase2/main/data";
 
 let loansData = null;
 let loansSha = null;
@@ -1006,7 +1006,7 @@ let schoolOptions = [];
 // Load schools from API (schoolTiers.json via worker)
 async function loadSchoolOptions() {
   try {
-    const res = await fetch('https://loan-valuation-api.jeff-263.workers.dev/schoolTiers', {
+    const res = await fetch('https://reporting-phase2-api.jeff-263.workers.dev/schoolTiers', {
       cache: 'no-store'
     });
     if (!res.ok) throw new Error('Failed to load schools');
@@ -1837,7 +1837,7 @@ function openUserManagementDrawer() {
     if (!isNaN(bps)) platformConfig.fees.monthlyServicingBps = bps;
 
     try {
-      const freshRes = await fetch("https://loan-valuation-api.jeff-263.workers.dev/platformConfig", { cache: "no-store" });
+      const freshRes = await fetch("https://reporting-phase2-api.jeff-263.workers.dev/platformConfig", { cache: "no-store" });
       let freshSha = null;
       if (freshRes.ok) {
         const data = await freshRes.json();
@@ -1853,7 +1853,7 @@ function openUserManagementDrawer() {
         sha: freshSha
       }, null, 2));
 
-      const saveRes = await fetch("https://loan-valuation-api.jeff-263.workers.dev/platformConfig", {
+      const saveRes = await fetch("https://reporting-phase2-api.jeff-263.workers.dev/platformConfig", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -2372,8 +2372,8 @@ function collectLoans() {
   const status = document.getElementById("status");
 
 async function loadFromBackend() {
-  const BACKEND_URL = "https://loan-valuation-api.jeff-263.workers.dev";
-  const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/jeff-stratofied/loan-valuation/main/data";
+  const BACKEND_URL = "https://reporting-phase2n-api.jeff-263.workers.dev";
+  const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/jeff-stratofied/reporting-phase2/main/data";
   const statusEl = document.getElementById("status");
 
   try {
@@ -2954,7 +2954,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   portBtn.onclick = () => {
     const user = userSelect.value;
-    window.open(`/loan-valuation/reporting.html?user=${user}`, '_blank');
+    window.open(`/reporting-phase2/reporting.html?user=${user}`, '_blank');
   };
 
 const guideBtn = document.getElementById("userGuideBtn");
@@ -2995,7 +2995,7 @@ window.SCHOOLTIERS = SCHOOLTIERS;
 // Risk & Value Config Drawer Logic
 // ────────────────────────────────────────────────
 
-const CONFIG_API_URL = "https://loan-valuation-api.jeff-263.workers.dev/config";
+const CONFIG_API_URL = "https://reporting-phase2-api.jeff-263.workers.dev/config";
 
 const RISK_VALUE_KEYS = [
   { id: 'risk-premium-low',        path: ['riskPremiumBps', 'LOW'],        type: 'int'   },
@@ -3132,7 +3132,7 @@ async function saveRiskValueControls() {
   };
 
   try {
-    const res = await fetch("https://loan-valuation-api.jeff-263.workers.dev/config", {
+    const res = await fetch("https://reporting-phase2-api.jeff-263.workers.dev/config", {
       method: 'POST',
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -3341,7 +3341,7 @@ document.getElementById("csv-file-input").addEventListener("change", async (e) =
   
 </script>
 
-<script src="/loan-valuation/feedback.js?v=dev"></script>
+<script src="/reporting-phase2/feedback.js?v=dev"></script>
 
 <!-- User Guide Overlay -->
 <div id="userGuideOverlay" class="guide-overlay hidden"></div>
