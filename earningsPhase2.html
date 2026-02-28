@@ -1410,7 +1410,7 @@ import {
   getUserOwnershipPct
 } from "./ownershipEngine.js?v=dev";
 
-import { USERS, loadUsers } from '/loan-valuation/users.js?v=dev';
+import { USERS, loadUsers } from '/reporting-phase2/users.js?v=dev';
   
 
 let earningsDataReadyResolve;
@@ -1611,7 +1611,7 @@ const TODAY = getStandardToday();
 // =====================================================
 function redirectToFullEarnings(openParam = "projected") {
   const url =
-    `/loan-valuation/earnings-shell.html` +
+    `/reporting-phase2/earnings-shellPhase2.html` +
     `?user=${PAGE_USER}` +
     `&from=reporting` +
     (openParam ? `&open=${encodeURIComponent(openParam)}` : "");
@@ -2395,7 +2395,7 @@ document.querySelectorAll(".kpi").forEach(tile => {
     // ✅ IFRAME: always escape to full page, preserve which KPI was clicked
     if (isEmbed) {
       const url =
-        `/loan-valuation/earnings-shell.html` +
+        `/reporting-phase2/earnings-shellPhase2.html` +
         `?user=${PAGE_USER}` +
         `&from=reporting` +
         `&open=${type}`;
@@ -4644,7 +4644,7 @@ try {
 
   // 2️⃣ Load fees only (users are already handled above)
   const platformConfig = await loadPlatformConfig(
-    "https://jeff-stratofied.github.io/loan-valuation/data/platformConfig.json?ts=" + Date.now()
+    "https://jeff-stratofied.github.io/reporting-phase2/data/platformConfig.json?ts=" + Date.now()
   );
 
   // Apply fees to globals
@@ -4772,7 +4772,7 @@ try {
       (e) => {
         if (e.target.closest("button, a")) return;
         window.top.location.href =
-          `/loan-valuation/earnings-shell.html?user=${PAGE_USER}&open=kpi2`;
+          `/reporting-phase2/earnings-shellPhase2.html?user=${PAGE_USER}&open=kpi2`;
       },
       true
     );
@@ -6217,7 +6217,7 @@ window.addEventListener("popstate", (e) => {
   
   </script>
 
-<script src="/loan-valuation/feedback.js"></script>
+<script src="/reporting-phase2/feedback.js"></script>
 
   
 </body>
