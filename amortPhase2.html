@@ -2067,6 +2067,7 @@ function assert(condition, message, context = {}) {
   }
 }
 
+    /* delete
 function renderLoanTiles(loans) {
   const grid = document.getElementById("loanGrid");
   const tooltip = document.getElementById("tooltip");
@@ -2078,9 +2079,6 @@ function renderLoanTiles(loans) {
   derived.loanViews.forEach(
     ({ loan, miniSeries, maturityDate, currentMonthIndex }, idx) => {
 
-      /* ============================
-         Render loan tiles with mini-charts (cumulative principal & interest)
-         ============================ */
 
       assert(loan, "loan missing in loanView", { idx });
       assert(Array.isArray(miniSeries), "miniSeries missing for loan", loan);
@@ -2149,9 +2147,6 @@ function renderLoanTiles(loans) {
         </div>
       `;
 
-      /* -----------------------------
-         Badge hover (ROI-style)
-         ----------------------------- */
       if (Array.isArray(loan.events) && loan.events.length > 0) {
         const badges = tile.querySelectorAll(".loan-badge");
 
@@ -2262,9 +2257,6 @@ if (pie) {
 
       grid.appendChild(tile);
 
-      /* -----------------------------
-         Mini sparkline
-         ----------------------------- */
       const svg = tile.querySelector("svg.sparkline");
       const w = 170, h = 48, pad = 6;
 
@@ -2404,7 +2396,7 @@ const yI = yForValue(p.cumInterest);
     }
   );
 }
-
+*/
 
   /* =========================
      C. DERIVED DATA
@@ -2530,7 +2522,10 @@ switch (key) {
      ========================= */
 
   filteredLoans = [...currentLoans];
+  
+  /* delete
   renderLoanTiles(filteredLoans);
+  */
 
   /* =========================
      FILTERS / SORTING
@@ -3024,8 +3019,11 @@ function applyLoanFilters() {
 
   applyLoanSort();
 
+  /* delete
   // Re-render both views
   renderLoanTiles(currentLoans);
+*/
+  
   if (!loanTableWrap.hidden) {
     renderLoanTable(getLoansForTableView());
   }
