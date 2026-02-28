@@ -860,7 +860,7 @@ body.shell .header-controls { display: none; }
 
     
     <section class="grid" id="loanGrid" aria-live="polite" hidden></section>
-  <section id="loanTableWrap" class="loan-table-wrap" hidden>
+  <section id="loanTableWrap" class="loan-table-wrap">
   <table id="loanTable">
     <thead>
       <tr>
@@ -1545,7 +1545,9 @@ if (PAGE_CONTEXT.cameFromReporting && !HAS_HANDLED_REPORTING_ENTRY) {
   drawer.classList.add("open");
   drawer.setAttribute("aria-hidden", "false");
 }
-
+const tableWrap = document.getElementById("loanTableWrap");
+tableWrap.hidden = false;
+refreshDisplay();
   
 }
 
