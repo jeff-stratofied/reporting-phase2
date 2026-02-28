@@ -324,7 +324,7 @@
       const user = urlParams.get("user") || "jeff";
       const open = urlParams.get("open") || "first";
 
-      const iframeSrc = `/loan-valuation/amort.html?user=${user}&from=reporting&open=${open}&shell=true&v=${Date.now()}`;
+      const iframeSrc = `/reporting-phase2/amortPhase2.html?user=${user}&from=reporting&open=${open}&shell=true&v=${Date.now()}`;
       document.getElementById("amortContent").src = iframeSrc;
 
       const displayNames = {
@@ -342,7 +342,7 @@ window.addEventListener("message", (event) => {
     const user = urlParams.get("user") || "jeff";
 
     // Navigate the TOP window (escape iframe completely)
-    window.top.location.href = `/reporting-phase2/reporting.html?user=${user}`;
+    window.top.location.href = `/reporting-phase2/reportingPhase2.html?user=${user}`;
   }
 });
 
