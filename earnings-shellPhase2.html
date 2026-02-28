@@ -258,7 +258,7 @@
       <div class="sidebar-header">
         <i class="fas fa-bars hamburger" id="hamburger"></i>
       </div>
-      <a class="menu-item" id="homeNav" href="/loan-valuation/admin.html">
+      <a class="menu-item" id="homeNav" href="/reporting-phase2/admin.html">
         <i class="fas fa-home"></i>
         <span class="menu-label">Home</span>
       </a>
@@ -315,7 +315,7 @@
       const user = urlParams.get("user") || "jeff";
       const open = urlParams.get("open") || "kpi2";
 
-      const iframeSrc = `/loan-valuation/earnings.html?user=${user}&from=reporting&open=${open}&shell=true&v=${Date.now()}`;
+      const iframeSrc = `/reporting-phase2/earnings.html?user=${user}&from=reporting&open=${open}&shell=true&v=${Date.now()}`;
       document.getElementById("earningsContent").src = iframeSrc;
 
       const displayNames = {
@@ -333,12 +333,12 @@ window.addEventListener("message", (event) => {
     const user = urlParams.get("user") || "jeff";
 
     // Navigate the TOP window (escape iframe completely)
-    window.top.location.href = `/loan-valuation/reporting.html?user=${user}`;
+    window.top.location.href = `/reporting-phase2/reporting.html?user=${user}`;
   }
 });
     
   </script>
 
-  <script src="/loan-valuation/feedback.js"></script>
+  <script src="/reporting-phase2/feedback.js"></script>
 </body>
 </html>
