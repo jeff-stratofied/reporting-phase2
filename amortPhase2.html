@@ -1041,7 +1041,7 @@ import {
   MARKET_USER
 } from "./ownershipEngine.js?v=dev";
 
-    import { USERS, loadUsers } from '/loan-valuation/users.js?v=dev';
+    import { USERS, loadUsers } from '/reporting-phase2/users.js?v=dev';
 
 /* =========================================================
    A. PAGE CONTEXT & ROUTING
@@ -2510,7 +2510,7 @@ function renderAndWirePage() {
     // IFRAME / REPORTING → redirect to full page
     if (PAGE_CONTEXT.isEmbed) {
       const url = new URL(
-        window.location.origin + "/loan-valuation/amort-shell.html"
+        window.location.origin + "/reporting-phase2/amort-shellPhase2.html"
       );
       url.searchParams.set("user", PAGE_CONTEXT.user);
       url.searchParams.set("from", "reporting");
@@ -4906,7 +4906,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 // =====================================================
 if (PAGE_CONTEXT.isEmbed) {
   const user = PAGE_CONTEXT.user;
-  const baseUrl = `/loan-valuation/amort-shell.html?user=${user}`;
+  const baseUrl = `/reporting-phase2/amort-shellPhase2.html?user=${user}`;
 
   function redirectToFullPage() {
     let url = baseUrl;
@@ -4945,7 +4945,7 @@ if (PAGE_CONTEXT.isEmbed) {
     
 </script>
 
-<script src="/loan-valuation/feedback.js"></script>
+<script src="/reporting-phase2/feedback.js"></script>
 
   
 </body>
