@@ -404,7 +404,7 @@ html[data-theme="dark"] body {
             <a
   class="menu-item"
   id="homeNav"
-  href="/loan-valuation/admin.html"
+  href="/reporting-phase2/adminPhase2.html"
 >
   <i class="fas fa-home"></i>
   <span class="menu-label">Home</span>
@@ -521,7 +521,7 @@ background: transparent;
 
   <script type="module">
 
-import { USERS, loadUsers, getUserDisplayName } from '/loan-valuation/users.js?v=dev';
+import { USERS, loadUsers, getUserDisplayName } from '/reporting-phase2/users.js?v=dev';
       
       
         const hamburger = document.getElementById('hamburger');
@@ -620,15 +620,15 @@ function buildFrames(user) {
   const v = Date.now(); // force reload
 
   document.getElementById("roiFrame").src =
-    `/loan-valuation/roi.html?user=${user}&from=reporting&embed=true&open=rates&v=${v}`;
+    `/reporting-phase2/roiPhase2.html?user=${user}&from=reporting&embed=true&open=rates&v=${v}`;
   document.getElementById("earningsFrame").src =
-    `/loan-valuation/earnings.html?user=${user}&embed=true&open=kpi2&v=${v}`;
+    `/reporting-phase2/earningsPhase2.html?user=${user}&embed=true&open=kpi2&v=${v}`;
   document.getElementById("amortFrame").src =
-    `/loan-valuation/amort.html?user=${user}&embed=true&open=first&v=${v}`;
+    `/reporting-phase2/amortPhase2.html?user=${user}&embed=true&open=first&v=${v}`;
 
   // Add valuations frame
  document.getElementById("valuationsFrame").src =
-  `/loan-valuation/loanValuation.html?user=${user}&embed=true&v=${Date.now()}`;
+  `/reporting-phase2/loanValuation.html?user=${user}&embed=true&v=${Date.now()}`;
 }
 
 
@@ -677,12 +677,12 @@ if (
         // Wire redirects
         wireClickRedirect(
           "roiFrame",
-          "/loan-valuation/roi-shell.html",
+          "/reporting-phase2/roi-shellPhase2.html",
           "rates"
         );
-        wireClickRedirect("earningsFrame", "/loan-valuation/earnings-shell.html","kpi2");
-        wireClickRedirect("amortFrame", "/loan-valuation/amort-shell.html", "first");
-      wireClickRedirect("valuationsFrame", "/loan-valuation/loanValuation.html", null);
+        wireClickRedirect("earningsFrame", "/reporting-phase2/earnings-shellPhase2.html","kpi2");
+        wireClickRedirect("amortFrame", "/reporting-phase2/amort-shellPhase2.html", "first");
+      wireClickRedirect("valuationsFrame", "/reporting-phase2/loanValuation.html", null);
 
       
 // ===================================================
@@ -758,7 +758,7 @@ window.addEventListener("message", (event) => {
         
     </script>
 
-<script src="/loan-valuation/feedback.js"></script>
+<script src="/reporting-phase2/feedback.js"></script>
     
 </body>
 </html>
