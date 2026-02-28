@@ -239,7 +239,40 @@ p.lead { margin: 0; color: var(--muted); font-size: 13px; }
   margin-left: auto;
 }
 
+.view-toggle {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
 
+.view-btn {
+  width: 34px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px;
+  cursor: pointer;
+}
+
+.view-btn span {
+  height: 2px;
+  background: var(--muted);
+  border-radius: 2px;
+}
+
+.view-btn.active {
+  border-color: var(--brand);
+  background: rgba(14,165,233,0.08);
+}
+
+.view-btn.active span { background: var(--brand); }
+
+.view-btn:hover { border-color: var(--brand); }
 
 .reset-btn {
   background: var(--surface);
@@ -2566,6 +2599,62 @@ sortLoans.add(new Option("Rate ↓", "rate_desc"));
 
   applyLoanFilters();
 
+/* =========================================
+   VIEW STATE — SINGLE SOURCE OF TRUTH (ROI)
+   ========================================= */
+
+const VIEW_STORAGE_KEY = "amortView"; // full | compact | table
+let VIEW_STATE = "full";
+
+const tableWrap = document.getElementById("loanTableWrap");
+const viewBtns = document.querySelectorAll(".view-btn");
+
+/* Apply view */
+function applyViewMode(view) {
+  VIEW_STATE = view;
+
+  // persist
+  localStorage.setItem(VIEW_STORAGE_KEY, view);
+
+  // button UI
+  viewBtns.forEach(btn =>
+    btn.classList.toggle("active", btn.dataset.view === view)
+  );
+
+  // embed mode → force grid
+  if (PAGE_CONTEXT.isEmbed) {
+    gridEl.style.display = "";
+    tableWrap.hidden = true;
+    gridEl.classList.remove("compact");
+    return;
+  }
+
+  // reset
+  gridEl.style.display = "";
+  tableWrap.hidden = true;
+  gridEl.classList.remove("compact");
+
+  if (view === "compact") {
+    gridEl.classList.add("compact");
+  }
+
+  if (view === "table") {
+    gridEl.style.display = "none";
+    tableWrap.hidden = false;
+    renderLoanTable(getLoansForTableView());
+  }
+}
+
+/* Restore saved view */
+const savedView = localStorage.getItem(VIEW_STORAGE_KEY);
+applyViewMode(savedView || "full");
+
+/* Wire buttons */
+viewBtns.forEach(btn => {
+  btn.addEventListener("click", () => {
+    applyViewMode(btn.dataset.view);
+  });
+});
 
 (function wireAmortToggle() {
   const loanBtn = document.getElementById("amortLoanViewBtn");
@@ -2937,7 +3026,9 @@ function applyLoanFilters() {
 
   // Re-render both views
   renderLoanTiles(currentLoans);
-  
+  if (!loanTableWrap.hidden) {
+    renderLoanTable(getLoansForTableView());
+  }
 }
 
     /* =========================
