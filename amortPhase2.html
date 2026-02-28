@@ -2599,62 +2599,6 @@ sortLoans.add(new Option("Rate ↓", "rate_desc"));
 
   applyLoanFilters();
 
-/* =========================================
-   VIEW STATE — SINGLE SOURCE OF TRUTH (ROI)
-   ========================================= */
-
-const VIEW_STORAGE_KEY = "amortView"; // full | compact | table
-let VIEW_STATE = "full";
-
-const tableWrap = document.getElementById("loanTableWrap");
-const viewBtns = document.querySelectorAll(".view-btn");
-
-/* Apply view */
-function applyViewMode(view) {
-  VIEW_STATE = view;
-
-  // persist
-  localStorage.setItem(VIEW_STORAGE_KEY, view);
-
-  // button UI
-  viewBtns.forEach(btn =>
-    btn.classList.toggle("active", btn.dataset.view === view)
-  );
-
-  // embed mode → force grid
-  if (PAGE_CONTEXT.isEmbed) {
-    gridEl.style.display = "";
-    tableWrap.hidden = true;
-    gridEl.classList.remove("compact");
-    return;
-  }
-
-  // reset
-  gridEl.style.display = "";
-  tableWrap.hidden = true;
-  gridEl.classList.remove("compact");
-
-  if (view === "compact") {
-    gridEl.classList.add("compact");
-  }
-
-  if (view === "table") {
-    gridEl.style.display = "none";
-    tableWrap.hidden = false;
-    renderLoanTable(getLoansForTableView());
-  }
-}
-
-/* Restore saved view */
-const savedView = localStorage.getItem(VIEW_STORAGE_KEY);
-applyViewMode(savedView || "full");
-
-/* Wire buttons */
-viewBtns.forEach(btn => {
-  btn.addEventListener("click", () => {
-    applyViewMode(btn.dataset.view);
-  });
-});
 
 (function wireAmortToggle() {
   const loanBtn = document.getElementById("amortLoanViewBtn");
@@ -3026,9 +2970,7 @@ function applyLoanFilters() {
 
   // Re-render both views
   renderLoanTiles(currentLoans);
-  if (!loanTableWrap.hidden) {
-    renderLoanTable(getLoansForTableView());
-  }
+  
 }
 
     /* =========================
