@@ -860,7 +860,7 @@ body.shell .header-controls { display: none; }
 
     
     <section class="grid" id="loanGrid" aria-live="polite" hidden></section>
-  <section id="loanTableWrap" class="loan-table-wrap">
+  <section id="loanTableWrap" class="loan-table-wrap" hidden>
   <table id="loanTable">
     <thead>
       <tr>
@@ -1545,9 +1545,7 @@ if (PAGE_CONTEXT.cameFromReporting && !HAS_HANDLED_REPORTING_ENTRY) {
   drawer.classList.add("open");
   drawer.setAttribute("aria-hidden", "false");
 }
-const tableWrap = document.getElementById("loanTableWrap");
-tableWrap.hidden = false;
-refreshDisplay();
+
   
 }
 
@@ -2036,7 +2034,6 @@ function assert(condition, message, context = {}) {
   }
 }
 
-    /* delete
 function renderLoanTiles(loans) {
   const grid = document.getElementById("loanGrid");
   const tooltip = document.getElementById("tooltip");
@@ -2048,6 +2045,9 @@ function renderLoanTiles(loans) {
   derived.loanViews.forEach(
     ({ loan, miniSeries, maturityDate, currentMonthIndex }, idx) => {
 
+      /* ============================
+         Render loan tiles with mini-charts (cumulative principal & interest)
+         ============================ */
 
       assert(loan, "loan missing in loanView", { idx });
       assert(Array.isArray(miniSeries), "miniSeries missing for loan", loan);
@@ -2116,7 +2116,9 @@ function renderLoanTiles(loans) {
         </div>
       `;
 
-
+      /* -----------------------------
+         Badge hover (ROI-style)
+         ----------------------------- */
       if (Array.isArray(loan.events) && loan.events.length > 0) {
         const badges = tile.querySelectorAll(".loan-badge");
 
@@ -2227,6 +2229,9 @@ if (pie) {
 
       grid.appendChild(tile);
 
+      /* -----------------------------
+         Mini sparkline
+         ----------------------------- */
       const svg = tile.querySelector("svg.sparkline");
       const w = 170, h = 48, pad = 6;
 
@@ -2366,7 +2371,7 @@ const yI = yForValue(p.cumInterest);
     }
   );
 }
-*/
+
 
   /* =========================
      C. DERIVED DATA
@@ -2492,7 +2497,7 @@ switch (key) {
      ========================= */
 
   filteredLoans = [...currentLoans];
-
+  renderLoanTiles(filteredLoans);
 
   /* =========================
      FILTERS / SORTING
@@ -2589,7 +2594,6 @@ wireLoanTableColumnSort();
 }
 
 
-
     
     /* =========================
    TABLE RENDER
@@ -2597,79 +2601,161 @@ wireLoanTableColumnSort();
 
 function renderLoanTable(loans) {
   const tbody = document.querySelector("#loanTable tbody");
+// 🔑 CLEAR PREVIOUS RENDERS
+tbody.innerHTML = "";
+  
   if (!tbody) return;
 
   tbody.innerHTML = "";
 
-  loans.forEach((loan, i) => {
+  loans.forEach(loan => {
     const tr = document.createElement("tr");
-    tr.tabIndex = 0;
+    tr.tabIndex = 0; // keyboard focus
     tr.style.cursor = "pointer";
 
-    tr.innerHTML = `
-      <td>${loan.loanId}</td>
-      <td class="event-cell">
-        ${buildEventRoundBadges(loan.events || [])}
-      </td>
-      <td class="ownership-cell"></td>
-      <td>${loan.loanName}</td>
-      <td>${loan.school}</td>
-      <td>${formatDate(new Date(loan.loanStartDate))}</td>
-      <td>${formatDate(new Date(loan.purchaseDate))}</td>
-      <td>${formatCurrency(loan.principal)}</td>
-      <td>${formatCurrency(loan.userInvestedCapital)}</td>
-      <td>${(loan.nominalRate * 100).toFixed(2)}%</td>
-      <td>${loan.termYears}</td>
-      <td>${loan.graceYears ?? 0}</td>
-      <td>${formatCurrency(getCurrentLoanBalance(loan))}</td>
-    `;
+    /* delete
+const eventType = getLoanPrimaryEventType(loan);
+*/
 
-    // Click + keyboard → drawer
-    const openDrawer = () => {
-      openDrawerForLoan(loan);
-      drawer.classList.add("open");
-      drawer.setAttribute("aria-hidden", "false");
-    };
+tr.innerHTML = `
+  <td>${loan.loanId}</td>
 
-    tr.addEventListener("click", openDrawer);
-    tr.addEventListener("keydown", e => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        openDrawer();
-      }
+<td class="event-cell">
+  ${buildEventRoundBadges(loan.events || [])}
+</td>
+<td class="ownership-cell"></td>
+  <td>${loan.loanName}</td>
+  <td>${loan.school}</td>
+  <td>${formatDate(new Date(loan.loanStartDate))}</td>
+  <td>${formatDate(new Date(loan.purchaseDate))}</td>
+  <td>${formatCurrency(loan.principal)}</td>
+  <td>${formatCurrency(loan.userInvestedCapital)}</td>
+  <td>${(loan.nominalRate * 100).toFixed(2)}%</td>
+  <td>${loan.termYears}</td>
+  <td>${loan.graceYears ?? 0}</td>
+  <td>${formatCurrency(getCurrentLoanBalance(loan))}</td>
+`;
+
+
+
+
+    /* delete
+const badge = tr.querySelector(".loan-badge");
+
+if (badge && eventType) {
+  badge.addEventListener("mouseenter", e => {
+    const event = loan.events.find(ev => ev.type === eventType);
+    if (!event) return;
+
+    const lines = [];
+
+    if (eventType === "prepayment") {
+      lines.push(
+        "Prepayment",
+        `Date: ${formatDate(new Date(event.date + "T00:00:00"))}`,
+        `Amount: ${formatCurrency(event.amount)}`
+      );
+    }
+
+    if (eventType === "default") {
+      lines.push(
+        "Default",
+        `Date: ${formatMonthYear(new Date(event.date + "T00:00:00"))}`,
+        `Recovered: ${formatCurrency(event.recovered ?? 0)}`
+      );
+    }
+
+    if (eventType === "deferral") {
+      lines.push(
+        "Deferral",
+        `Start: ${formatMonthYear(new Date(event.startDate + "T00:00:00"))}`,
+        `Months: ${event.months}`
+      );
+    }
+
+    setMiniTooltipContent(lines);
+    positionMiniTooltip(e.clientX, e.clientY - 8, 16);
+  });
+
+  badge.addEventListener("mouseleave", hideMiniTooltip);
+}
+*/
+
+    // -----------------------------
+    // Hover highlight
+    // -----------------------------
+    tr.addEventListener("mouseenter", () => {
+      tr.classList.add("row-hover");
     });
 
-    // Row hover class
-    tr.addEventListener("mouseenter", () => tr.classList.add("row-hover"));
-    tr.addEventListener("mouseleave",   () => tr.classList.remove("row-hover"));
+    tr.addEventListener("mouseleave", () => {
+      tr.classList.remove("row-hover");
+    });
 
-    // Event row shading
+    // -----------------------------
+    // Click → open loan drawer
+    // -----------------------------
+    tr.addEventListener("click", () => {
+  openDrawerForLoan(loan);
+  drawer.classList.add("open");
+  drawer.setAttribute("aria-hidden", "false");
+});
+
+
+    // Keyboard support (Enter / Space)
+    tr.addEventListener("keydown", e => {
+  if (e.key === "Enter" || e.key === " ") {
+    e.preventDefault();
+    openDrawerForLoan(loan);
+    drawer.classList.add("open");
+    drawer.setAttribute("aria-hidden", "false");
+  }
+});
+
+        tbody.appendChild(tr);
+
+    // === RESTORE EVENT ROW SHADING (default / deferral / prepayment) ===
     const eventType = getLoanPrimaryEventType(loan);
-    if (eventType) tr.classList.add(`event-${eventType}`);
+    if (eventType) {
+      tr.classList.add(`event-${eventType}`);
+    }
 
-    tbody.appendChild(tr);
-
-    // === Badge hovers (already good, just extract loan ref) ===
+    // Hover for multiple round badges in table view
     tr.querySelectorAll('.event-round-badge').forEach(badge => {
       badge.addEventListener("mouseenter", e => {
-        let eventType = null;
-        if (badge.classList.contains("default"))     eventType = "default";
-        if (badge.classList.contains("deferral"))    eventType = "deferral";
-        if (badge.classList.contains("prepayment"))  eventType = "prepayment";
+        const eventType = badge.classList.contains("default") ? "default" :
+                          badge.classList.contains("deferral") ? "deferral" :
+                          badge.classList.contains("prepayment") ? "prepayment" : null;
+
         if (!eventType) return;
 
         const event = loan.events.find(ev => ev.type === eventType);
         if (!event) return;
 
         const lines = [];
+
         if (eventType === "prepayment") {
-          lines.push("Prepayment", `Date: ${formatDate(new Date(event.date + "T00:00:00"))}`, `Amount: ${formatCurrency(event.amount)}`);
+          lines.push(
+            "Prepayment",
+            `Date: ${formatDate(new Date(event.date + "T00:00:00"))}`,
+            `Amount: ${formatCurrency(event.amount)}`
+          );
         }
+
         if (eventType === "default") {
-          lines.push("Default", `Date: ${formatMonthYear(new Date(event.date + "T00:00:00"))}`, `Recovered: ${formatCurrency(event.recovered ?? 0)}`);
+          lines.push(
+            "Default",
+            `Date: ${formatMonthYear(new Date(event.date + "T00:00:00"))}`,
+            `Recovered: ${formatCurrency(event.recovered ?? 0)}`
+          );
         }
+
         if (eventType === "deferral") {
-          lines.push("Deferral", `Start: ${formatMonthYear(new Date(event.startDate + "T00:00:00"))}`, `Months: ${event.months}`);
+          lines.push(
+            "Deferral",
+            `Start: ${formatMonthYear(new Date(event.startDate + "T00:00:00"))}`,
+            `Months: ${event.months}`
+          );
         }
 
         setMiniTooltipContent(lines);
@@ -2680,10 +2766,11 @@ function renderLoanTable(loans) {
     });
   });
 
-  // === Ownership pie + hover ===
+  // === OWNERSHIP PIE + HOVER (unchanged) ===
   document.querySelectorAll('#loanTable .ownership-cell').forEach((cell, i) => {
     const loan = loans[i];
     if (!loan) return;
+
     cell.innerHTML = buildOwnershipPie(loan);
 
     const pie = cell.querySelector('.ownership-pie');
@@ -2691,11 +2778,13 @@ function renderLoanTable(loans) {
       pie.addEventListener("mouseenter", e => {
         const text = pie.getAttribute("data-tooltip");
         if (!text) return;
+
         tooltip.innerHTML = text;
         tooltip.style.display = "block";
         tooltip.style.left = `${e.clientX}px`;
-        tooltip.style.top  = `${e.clientY - 10}px`;
+        tooltip.style.top = `${e.clientY - 10}px`;
       });
+
       pie.addEventListener("mouseleave", hideMiniTooltip);
     }
   });
@@ -2846,7 +2935,8 @@ function applyLoanFilters() {
 
   applyLoanSort();
 
-
+  // Re-render both views
+  renderLoanTiles(currentLoans);
   
 }
 
