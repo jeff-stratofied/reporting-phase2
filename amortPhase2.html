@@ -2067,336 +2067,7 @@ function assert(condition, message, context = {}) {
   }
 }
 
-    /* delete
-function renderLoanTiles(loans) {
-  const grid = document.getElementById("loanGrid");
-  const tooltip = document.getElementById("tooltip");
 
-  grid.innerHTML = "";
-
-  const derived = derivePortfolioData(loans);
-
-  derived.loanViews.forEach(
-    ({ loan, miniSeries, maturityDate, currentMonthIndex }, idx) => {
-
-
-      assert(loan, "loan missing in loanView", { idx });
-      assert(Array.isArray(miniSeries), "miniSeries missing for loan", loan);
-      assert(
-        Number.isFinite(currentMonthIndex),
-        "currentMonthIndex invalid",
-        loan
-      );
-
-      const tile = document.createElement("div");
-      tile.className = "tile";
-
-      tile.dataset.loanName = (loan.loanName || "").toLowerCase();
-      tile.dataset.school = (loan.school || "").toLowerCase();
-      tile.dataset.rate = loan.nominalRate;
-      tile.dataset.purchaseDate = new Date(loan.purchaseDate).getTime();
-      tile.dataset.startDate = new Date(loan.loanStartDate).getTime();
-      tile.dataset.amount = Number(loan.purchasePrice || 0);
-
-      tile.setAttribute("tabindex", "0");
-
-      tile.innerHTML = `
-        <div class="tile-left">
-          <div class="loan-name" style="font-weight:700;font-size:14px;">
-            ${loan.loanName}
-          </div>
-
-          <div class="loan-badges">
-  ${buildEventBadges(loan.events || [])}
-  ${buildOwnershipPie(loan)}
-</div>
-
-
-          <div class="loan-name" style="font-weight:700;font-size:13px;">
-            ${loan.school || "School"}
-          </div>
-
-          <div class="loan-sub" style="margin-top:6px;">
-            Rate: ${(loan.nominalRate * 100).toFixed(2)}%
-            &nbsp;·&nbsp;
-            Term: ${loan.termYears}y
-            &nbsp;·&nbsp;
-            Matures: ${
-              maturityDate
-                ? maturityDate.toLocaleDateString(undefined, {
-                    month: "short",
-                    year: "numeric"
-                  })
-                : "—"
-            }
-          </div>
-
-          <div class="loan-sub">
-            Loan ${loan.loanId}
-          </div>
-        </div>
-
-        <div class="chart-wrap">
-          <div class="mini-label">
-            Rate ${(loan.nominalRate * 100).toFixed(2)}%
-          </div>
-          <svg class="sparkline"
-               viewBox="0 0 170 48"
-               preserveAspectRatio="none"
-               aria-hidden="true"></svg>
-        </div>
-      `;
-
-      if (Array.isArray(loan.events) && loan.events.length > 0) {
-        const badges = tile.querySelectorAll(".loan-badge");
-
-        badges.forEach(badge => {
-          badge.addEventListener("mouseenter", e => {
-            let eventType = null;
-            if (badge.classList.contains("prepayment")) eventType = "prepayment";
-            if (badge.classList.contains("default")) eventType = "default";
-            if (badge.classList.contains("deferral")) eventType = "deferral";
-            if (!eventType) return;
-
-            const event = loan.events.find(ev => ev.type === eventType);
-            if (!event) return;
-
-            const lines = [];
-
-            if (eventType === "prepayment") {
-              lines.push(
-                "Prepayment",
-                `Date: ${formatDate(new Date(event.date + "T00:00:00"))}`,
-                `Amount: ${formatCurrency(event.amount)}`
-              );
-            }
-
-            if (eventType === "default") {
-              const [y, m, d] = event.date.split("-").map(Number);
-              const defDate = new Date(y, m - 1, d);
-
-              const schedule = loan.amort?.schedule || [];
-              let balanceAtDefault = 0;
-
-              for (const row of schedule) {
-                if (
-                  row.loanDate &&
-                  row.loanDate.getFullYear() === defDate.getFullYear() &&
-                  row.loanDate.getMonth() === defDate.getMonth()
-                ) {
-                  balanceAtDefault = Number(row.balance || 0);
-                  break;
-                }
-              }
-
-              const recovered = Number(
-                event.recovered ??
-                event.recoveredAmount ??
-                event.recoveryAmount ??
-                event.amountRecovered ??
-                event.recovery ??
-                0
-              );
-
-              lines.push(
-                "Default",
-                `Date: ${formatMonthYear(defDate)}`,
-                `Recovered: ${formatCurrency(recovered)}`,
-                `Remaining: ${formatCurrency(balanceAtDefault - recovered)}`
-              );
-            }
-
-            if (eventType === "deferral") {
-              lines.push(
-                "Deferral",
-                `Start: ${formatMonthYear(
-                  new Date(event.startDate + "T00:00:00")
-                )}`,
-                `Months: ${event.months}`
-              );
-            }
-
-            setMiniTooltipContent(lines);
-            positionMiniTooltip(e.clientX, e.clientY - 8, 16);
-          });
-
-          badge.addEventListener("mouseleave", hideMiniTooltip);
-        });
-      }
-
-// Ownership pie tooltip
-const pie = tile.querySelector(".ownership-pie");
-
-if (pie) {
-  pie.addEventListener("mouseenter", e => {
-    const text = pie.getAttribute("data-tooltip");
-    if (!text) return;
-
-    tooltip.innerHTML = text;
-    tooltip.style.display = "block";
-    tooltip.style.left = `${e.clientX}px`;
-    tooltip.style.top = `${e.clientY - 10}px`;
-  });
-
-  pie.addEventListener("mouseleave", hideMiniTooltip);
-}
-
-
-      
-      tile.addEventListener("click", e => {
-        e.stopPropagation();
-        openDrawerForLoan(loan);
-      });
-
-      tile.addEventListener("keydown", e => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          openDrawerForLoan(loan);
-        }
-      });
-
-      grid.appendChild(tile);
-
-      const svg = tile.querySelector("svg.sparkline");
-      const w = 170, h = 48, pad = 6;
-
-      const fullSched = miniSeries || [];
-      if (!fullSched.length) return;
-
-      const pPoints = fullSched.map(s => ({ y: s.cumPrincipal }));
-      const iPoints = fullSched.map(s => ({ y: s.cumInterest }));
-
-      const allYValues = [
-  ...pPoints.map(p => p.y),
-  ...iPoints.map(p => p.y)
-];
-
-const minY = Math.min(...allYValues);
-const maxY = Math.max(...allYValues);
-
-const yForValue = v => {
-  if (maxY === minY) return h / 2;
-  return (
-    h - pad -
-    ((v - minY) / (maxY - minY)) * (h - pad * 2)
-  );
-};
-
-      const pathP = pPoints
-  .map((p, i) => {
-    const x = pad + i * ((w - pad * 2) / Math.max(1, pPoints.length - 1));
-    const y = yForValue(p.y);
-    return `${i === 0 ? "M" : "L"} ${x} ${y}`;
-  })
-  .join(" ");
-
-const pathI = iPoints
-  .map((p, i) => {
-    const x = pad + i * ((w - pad * 2) / Math.max(1, iPoints.length - 1));
-    const y = yForValue(p.y);
-    return `${i === 0 ? "M" : "L"} ${x} ${y}`;
-  })
-  .join(" ");
-
-      const maxMonth = Math.max(1, fullSched.length);
-      const xForMonth = idx => {
-  const stepX = (w - pad * 2) / Math.max(1, maxMonth - 1);
-  const clamped = Math.min(Math.max(idx, 0), maxMonth - 1);
-  return pad + clamped * stepX;
-};
-
-
-      svg.innerHTML = `
-        <path d="${pathI}" fill="none" stroke="#a78bfa" stroke-width="1.6" />
-        <path d="${pathP}" fill="none" stroke="#06b6d4" stroke-width="1.6" />
-        <g class="mini-hover"></g>
-        <line class="current-line"
-              x1="${xForMonth(currentMonthIndex)}"
-              y1="2"
-              x2="${xForMonth(currentMonthIndex)}"
-              y2="${h - 2}"
-              stroke="#111827"
-              stroke-dasharray="3 3"
-              stroke-opacity="0.6" />
-      `;
-
-const hoverG = svg.querySelector("g.mini-hover");
-
-      
-svg.addEventListener("mousemove", ev => {
-  // 🔑 isolate tooltip
-  claimTooltip("mini");
-
-  const rect = svg.getBoundingClientRect();
-  const frac = (ev.clientX - rect.left) / rect.width;
-  const idx = Math.max(
-    0,
-    Math.min(fullSched.length - 1, Math.round(frac * (fullSched.length - 1)))
-  );
-
-  const p = fullSched[idx];
-  if (!p) return;
-
-  // ---------------------------
-  // Date label (already fixed)
-  // ---------------------------
-  const hoverDate = displayDateForMonthIndex(
-    p.monthIndex,
-    loan.loanStartDate + "T00:00:00"
-  );
-
-  const dateLabel = formatMonthYear(hoverDate);
-
-  tooltip.innerHTML =
-  `${dateLabel}<br>` +
-  `<span style="opacity:0.85">Scheduled Principal</span>: $${p.cumPrincipal.toLocaleString()}<br>` +
-  `<span style="opacity:0.85">Accrued Interest</span>: $${p.cumInterest.toLocaleString()}`;
-
-
-  tooltip.style.left = `${ev.clientX}px`;
-  tooltip.style.top = `${ev.clientY - 10}px`;
-  tooltip.style.display = "block";
-
-  // ---------------------------
-  // Hover visuals
-  // ---------------------------
-  hoverG.innerHTML = "";
-
-  const x = pad + idx * ((w - pad * 2) / Math.max(1, fullSched.length - 1));
-
-
-  // vertical dotted line
-  hoverG.innerHTML += `
-    <line
-      x1="${x}" y1="2"
-      x2="${x}" y2="${h - 2}"
-      stroke="#111827"
-      stroke-dasharray="3 3"
-      stroke-opacity="0.6"
-    />
-  `;
-
-  const yP = yForValue(p.cumPrincipal);
-const yI = yForValue(p.cumInterest);
-
-  hoverG.innerHTML += `
-    <circle cx="${x}" cy="${yP}" r="3"
-            fill="#06b6d4" />
-    <circle cx="${x}" cy="${yI}" r="3"
-            fill="#a78bfa" />
-  `;
-});
-
-
-      svg.addEventListener("mouseleave", () => {
-        tooltip.style.display = "none";
-        const hoverG = svg.querySelector("g.mini-hover");
-        if (hoverG) hoverG.innerHTML = "";
-      });
-    }
-  );
-}
-*/
 
   /* =========================
      C. DERIVED DATA
@@ -2523,9 +2194,7 @@ switch (key) {
 
   filteredLoans = [...currentLoans];
   
-  /* delete
-  renderLoanTiles(filteredLoans);
-  */
+ 
 
   /* =========================
      FILTERS / SORTING
@@ -2697,9 +2366,7 @@ tbody.innerHTML = "";
     tr.tabIndex = 0; // keyboard focus
     tr.style.cursor = "pointer";
 
-    /* delete
-const eventType = getLoanPrimaryEventType(loan);
-*/
+
 
 tr.innerHTML = `
   <td>${loan.loanId}</td>
@@ -2723,47 +2390,7 @@ tr.innerHTML = `
 
 
 
-    /* delete
-const badge = tr.querySelector(".loan-badge");
-
-if (badge && eventType) {
-  badge.addEventListener("mouseenter", e => {
-    const event = loan.events.find(ev => ev.type === eventType);
-    if (!event) return;
-
-    const lines = [];
-
-    if (eventType === "prepayment") {
-      lines.push(
-        "Prepayment",
-        `Date: ${formatDate(new Date(event.date + "T00:00:00"))}`,
-        `Amount: ${formatCurrency(event.amount)}`
-      );
-    }
-
-    if (eventType === "default") {
-      lines.push(
-        "Default",
-        `Date: ${formatMonthYear(new Date(event.date + "T00:00:00"))}`,
-        `Recovered: ${formatCurrency(event.recovered ?? 0)}`
-      );
-    }
-
-    if (eventType === "deferral") {
-      lines.push(
-        "Deferral",
-        `Start: ${formatMonthYear(new Date(event.startDate + "T00:00:00"))}`,
-        `Months: ${event.months}`
-      );
-    }
-
-    setMiniTooltipContent(lines);
-    positionMiniTooltip(e.clientX, e.clientY - 8, 16);
-  });
-
-  badge.addEventListener("mouseleave", hideMiniTooltip);
-}
-*/
+   
 
     // -----------------------------
     // Hover highlight
@@ -3019,10 +2646,7 @@ function applyLoanFilters() {
 
   applyLoanSort();
 
-  /* delete
-  // Re-render both views
-  renderLoanTiles(currentLoans);
-*/
+
   
   if (!loanTableWrap.hidden) {
     renderLoanTable(getLoansForTableView());
@@ -3580,13 +3204,7 @@ console.log("Drawer opened. Final row count in amortBody:", amortBody.children.l
       return d.toLocaleString(undefined, { year: 'numeric', month: 'short' });
     }
 
-    /* delete
-function getUserInvestedCapital(loan, user) {
-  return (loan.ownershipLots || [])
-    .filter(lot => lot.user === user)
-    .reduce((sum, lot) => sum + (Number(lot.pricePaid) || 0), 0);
-}
-*/
+
 
     
 function renderDistributionDrawer() {
