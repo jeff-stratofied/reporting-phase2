@@ -293,14 +293,33 @@ function KpiTable({ loans, mode, focusedLoanId, onFocusLoan, colorById }: {
             const isFocused = focusedLoanId != null && focusedLoanId === loanId
             const isDimmed  = focusedLoanId != null && !isFocused
 
-            const currentEntry = (loan.roiSeries ?? []).find((r: any) => {
-              const rd = r.date instanceof Date ? r.date : new Date(r.date)
-              return rd.getFullYear() === KPI_CURRENT_MONTH.getFullYear() && rd.getMonth() === KPI_CURRENT_MONTH.getMonth()
-            }) ?? (loan.roiSeries ?? []).at(-1)
-            const roiDate  = currentEntry?.roi ?? 0
-            const roiProj  = (loan.roiSeries ?? []).at(-1)?.roi ?? 0
-            const matDate  = (() => { const last = (loan.amort?.schedule ?? []).at(-1); return last?.loanDate instanceof Date ? fmtMY(last.loanDate) : '—' })()
-            const purchDate = loan.purchaseDate ? (() => { try { return fmtMY(new Date(loan.purchaseDate)) } catch { return loan.purchaseDate } })() : '—'
+            const roiSeries = loan.roiSeries ?? []
+const amortSchedule = loan.amort?.schedule ?? []
+
+const currentEntry =
+  roiSeries.find((r: any) => {
+    const rd = r.date instanceof Date ? r.date : new Date(r.date)
+    return (
+      rd.getFullYear() === KPI_CURRENT_MONTH.getFullYear() &&
+      rd.getMonth() === KPI_CURRENT_MONTH.getMonth()
+    )
+  }) ?? (roiSeries.length > 0 ? roiSeries[roiSeries.length - 1] : undefined)
+
+const roiDate = currentEntry?.roi ?? 0
+const roiProj = roiSeries.length > 0 ? (roiSeries[roiSeries.length - 1]?.roi ?? 0) : 0
+const matDate = (() => {
+  const last = amortSchedule.length > 0 ? amortSchedule[amortSchedule.length - 1] : undefined
+  return last?.loanDate instanceof Date ? fmtMY(last.loanDate) : '—'
+})()
+const purchDate = loan.purchaseDate
+  ? (() => {
+      try {
+        return fmtMY(new Date(loan.purchaseDate))
+      } catch {
+        return loan.purchaseDate
+      }
+    })()
+  : '—'
 
             let capRecovered = 0
             const capInvested = Number(loan.userPurchasePrice ?? loan.purchasePrice ?? 0)
