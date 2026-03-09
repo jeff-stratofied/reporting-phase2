@@ -568,8 +568,6 @@ if (sortKey === 'roi_desc')
     setSearchParams({})
   }
 
-  const drawerOpen = drawer !== null
-
   // Resolve title & sub for current drawer
   const drawerTitle = (() => {
     if (!drawer) return ''
