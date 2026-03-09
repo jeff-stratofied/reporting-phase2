@@ -36,7 +36,7 @@ export default function App() {
 
   return (
     <UserProvider>
-      <BrowserRouter basename="/reporting-phase2">
+      <BrowserRouter basename="/reporting-phase2/react">
         <AppShell>
           <AppRoutes />
         </AppShell>
