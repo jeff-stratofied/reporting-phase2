@@ -863,9 +863,6 @@ function KpiEarningsDrawerBody({ kpi, loansWithRoi }: { kpi: EarningsKpiKey; loa
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
-function goBackToHoldings(navigate: ReturnType<typeof useNavigate>) {
-  navigate('/reporting-phase2')
-}
 
 export default function EarningsDetailPage() {
   const [searchParams, setSearchParams] = useSearchParams()
