@@ -968,12 +968,6 @@ const rowTs = new Date(
     return undefined
   }
 
-  function isPurchaseRow(r: any): boolean {
-    if (purchaseMonthTs == null) return false
-    const ts = new Date(r.loanDate.getFullYear(), r.loanDate.getMonth(), 1).getTime()
-    return ts === purchaseMonthTs
-  }
-
   const purchaseRowIndex = schedule.findIndex((r: any) => {
     if (purchaseMonthTs == null) return false
     const ts = new Date(r.loanDate.getFullYear(), r.loanDate.getMonth(), 1).getTime()
