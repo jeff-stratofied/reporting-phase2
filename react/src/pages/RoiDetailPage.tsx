@@ -482,12 +482,32 @@ function KpiDrawerBody({ kpi, loansWithRoi, roiKpis, roiTimeline }: {
     return sum + Number(e?.loanValue ?? 0)
   }, 0), [loansWithRoi])
 
-  const projPortfolioValue = useMemo(() => loansWithRoi.reduce((sum: number, l: any) => sum + Number((l.roiSeries ?? []).at(-1)?.loanValue ?? 0), 0), [loansWithRoi])
+  const projPortfolioValue = useMemo(() =>
+  loansWithRoi.reduce((sum: number, l: any) => {
+    const series = l.roiSeries ?? []
+    const last = series.length > 0 ? series[series.length - 1] : undefined
+    return sum + Number(last?.loanValue ?? 0)
+  }, 0),
+[loansWithRoi])
 
-  const spreadRows = useMemo(() => loansWithRoi.map((l: any) => {
-    const e = (l.roiSeries ?? []).find((r: any) => { const rd = r.date instanceof Date ? r.date : new Date(r.date); return rd.getFullYear() === KPI_CURRENT_MONTH.getFullYear() && rd.getMonth() === KPI_CURRENT_MONTH.getMonth() }) ?? (l.roiSeries ?? []).at(-1)
-    return { ...l, roiNow: e?.roi ?? 0 }
-  }).sort((a: any, b: any) => b.roiNow - a.roiNow), [loansWithRoi])
+const spreadRows = useMemo(() =>
+  loansWithRoi
+    .map((l: any) => {
+      const series = l.roiSeries ?? []
+
+      const e =
+        series.find((r: any) => {
+          const rd = r.date instanceof Date ? r.date : new Date(r.date)
+          return (
+            rd.getFullYear() === KPI_CURRENT_MONTH.getFullYear() &&
+            rd.getMonth() === KPI_CURRENT_MONTH.getMonth()
+          )
+        }) ?? (series.length > 0 ? series[series.length - 1] : undefined)
+
+      return { ...l, roiNow: e?.roi ?? 0 }
+    })
+    .sort((a: any, b: any) => b.roiNow - a.roiNow),
+[loansWithRoi])
 
   const chartBaseProps = {
     height: 260,
@@ -584,8 +604,27 @@ export default function RoiDetailPage() {
     if (sortKey === 'amount_desc')   rows.sort((a: any, b: any) => Number(b.principal ?? b.origLoanAmt ?? 0) - Number(a.principal ?? a.origLoanAmt ?? 0))
     if (sortKey === 'rate_asc')      rows.sort((a: any, b: any) => Number(a.nominalRate ?? 0) - Number(b.nominalRate ?? 0))
     if (sortKey === 'rate_desc')     rows.sort((a: any, b: any) => Number(b.nominalRate ?? 0) - Number(a.nominalRate ?? 0))
-    if (sortKey === 'roi_asc')       rows.sort((a: any, b: any) => ((a.roiSeries?.at(-2)?.roi ?? 0)) - ((b.roiSeries?.at(-2)?.roi ?? 0)))
-    if (sortKey === 'roi_desc')      rows.sort((a: any, b: any) => ((b.roiSeries?.at(-2)?.roi ?? 0)) - ((a.roiSeries?.at(-2)?.roi ?? 0)))
+if (sortKey === 'roi_asc')
+  rows.sort((a: any, b: any) => {
+    const aSeries = a.roiSeries ?? []
+    const bSeries = b.roiSeries ?? []
+
+    const aVal = aSeries.length > 1 ? (aSeries[aSeries.length - 2]?.roi ?? 0) : 0
+    const bVal = bSeries.length > 1 ? (bSeries[bSeries.length - 2]?.roi ?? 0) : 0
+
+    return aVal - bVal
+  })
+
+if (sortKey === 'roi_desc')
+  rows.sort((a: any, b: any) => {
+    const aSeries = a.roiSeries ?? []
+    const bSeries = b.roiSeries ?? []
+
+    const aVal = aSeries.length > 1 ? (aSeries[aSeries.length - 2]?.roi ?? 0) : 0
+    const bVal = bSeries.length > 1 ? (bSeries[bSeries.length - 2]?.roi ?? 0) : 0
+
+    return bVal - aVal
+  })
     return rows
   }, [loansWithRoi, filterName, filterSchool, filterRate, sortKey])
 
