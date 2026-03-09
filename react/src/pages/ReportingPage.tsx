@@ -586,13 +586,6 @@ interface AmortColumnProps {
 }
 
 // Detect event type for row background color
-function getEventRowBg(row: any): string | undefined {
-  const events: any[] = row._events ?? []
-  if (events.some((e: any) => e.type === 'default'))    return 'rgba(239,68,68,0.08)'
-  if (events.some((e: any) => e.type === 'deferral'))   return 'rgba(234,179,8,0.10)'
-  if (events.some((e: any) => e.type === 'prepayment')) return 'rgba(16,185,129,0.08)'
-  return undefined
-}
 
 function AmortColumn({ amortKpis, loansWithRoi }: AmortColumnProps) {
   const [hoveredKpi, setHoveredKpi] = useState<AmortKpiKey | null>(null)
