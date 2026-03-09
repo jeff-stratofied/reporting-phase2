@@ -45,13 +45,14 @@ function RoiColumn({ roiKpis, roiTimeline, loansWithRoi }: RoiColumnProps) {
   ]
 
   const projectedPortfolioValue = useMemo(
-    () =>
-      loansWithRoi.reduce(
-        (sum, loan) => sum + Number((loan.roiSeries ?? []).at(-1)?.loanValue ?? 0),
-        0
-      ),
-    [loansWithRoi]
-  )
+  () =>
+    loansWithRoi.reduce((sum, loan) => {
+      const series = loan.roiSeries ?? []
+      const last = series.length > 0 ? series[series.length - 1] : undefined
+      return sum + Number(last?.loanValue ?? 0)
+    }, 0),
+  [loansWithRoi]
+)
 
   const { perLoanSeries, weightedSeries, dates } = useMemo((): {
     perLoanSeries: LoanSeries[]
@@ -512,11 +513,15 @@ function EarningsLoanTable({ loansWithRoi, focusedLoanId, onFocusLoan, onRowClic
       .filter((r: any) => r.isOwned)
       .reduce((s: number, r: any) => s + rowNet(r, pct), 0)
   }
-  function loanMatDate(loan: any): string {
-    const sched = (loan.amort?.schedule ?? []).filter((r: any) => r.isOwned && r.loanDate instanceof Date)
-    const last  = sched.at(-1)
-    return last?.loanDate ? last.loanDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '—'
-  }
+function loanMatDate(loan: any): string {
+  const sched = (loan.amort?.schedule ?? []).filter(
+    (r: any) => r.isOwned && r.loanDate instanceof Date
+  )
+  const last = sched.length > 0 ? sched[sched.length - 1] : undefined
+  return last?.loanDate
+    ? last.loanDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+    : '—'
+}
 
   return (
     <div style={{ padding: '10px 12px 12px' }}>
