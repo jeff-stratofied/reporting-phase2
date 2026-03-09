@@ -87,7 +87,7 @@ function getLatestRoi(loan: Loan2): number {
   const entry = series.find(r => {
     const rd = r.date instanceof Date ? r.date : new Date(r.date)
     return rd.getFullYear() === KPI_CURRENT_MONTH.getFullYear() && rd.getMonth() === KPI_CURRENT_MONTH.getMonth()
-  }) ?? series.at(-1)
+  }) ?? (series.length > 0 ? series[series.length - 1] : undefined)
   return entry?.roi ?? 0
 }
 
