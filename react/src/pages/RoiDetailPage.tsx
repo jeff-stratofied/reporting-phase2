@@ -488,9 +488,6 @@ const spreadRows = useMemo(() =>
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
-function goBackToHoldings(navigate: ReturnType<typeof useNavigate>) {
-  navigate('/reporting-phase2')
-}
 
 export default function RoiDetailPage() {
   const [searchParams, setSearchParams] = useSearchParams()
