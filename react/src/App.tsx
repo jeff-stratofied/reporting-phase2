@@ -9,7 +9,7 @@ import AmortDetailPage from './pages/AmortDetailPage'
 import { setGlobalFeeConfig } from './utils/loanEngine'
 import platformConfig from './data/platformConfig.json'
 
-import { loadUsers } from './utils/users.js'
+import { loadUsers } from './utils/users'
 
 /** Builds Routes so the "/" element is recreated whenever user changes (key forces remount). */
 function AppRoutes() {
