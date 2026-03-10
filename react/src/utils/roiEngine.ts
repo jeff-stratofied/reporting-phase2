@@ -2,7 +2,7 @@
 // roiEngine.ts
 // ===============================
 
-import { buildAmortSchedule, type LoanInput } from './loanEngine'
+import { buildAmortSchedule } from './loanEngine'
 
 // =====================================================
 // Types
