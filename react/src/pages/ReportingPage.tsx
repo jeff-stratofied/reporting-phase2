@@ -304,7 +304,7 @@ function EarningsColumn({ earningsKpis, loansWithRoi }: EarningsColumnProps) {
 
   const { stackedSeries, allDates, monthlyBreakdownByTs } = useMemo(() => {
     const allMs = new Set<number>()
-
+  
     loansWithRoi.forEach((l: any) => {
       ;(l.amort?.schedule ?? []).forEach((r: any) => {
         if (r.isOwned && r.loanDate instanceof Date) {
@@ -312,74 +312,51 @@ function EarningsColumn({ earningsKpis, loansWithRoi }: EarningsColumnProps) {
         }
       })
     })
-
+  
     const allDates = Array.from(allMs).sort((a, b) => a - b).map(t => new Date(t))
-
+  
     const monthlyBreakdownByTs = new Map<number, {
       principal: number
       interest: number
       fees: number
       net: number
     }>()
-
-    allDates.forEach(d => {
-      monthlyBreakdownByTs.set(d.getTime(), {
-        principal: 0,
-        interest: 0,
-        fees: 0,
-        net: 0,
-      })
-    })
-
+  
     const stackedSeries = loansWithRoi.map((loan: any) => {
       const id = String(loan.loanId ?? loan.id ?? '')
       const pct = getOwnershipPct(loan)
       const sched: any[] = (loan.amort?.schedule ?? []).filter(
         (r: any) => r.isOwned && r.loanDate instanceof Date
       )
-
+  
       const monthlyNet = new Map<number, number>()
-
+  
       sched.forEach(r => {
         const ts = new Date(r.loanDate.getFullYear(), r.loanDate.getMonth(), 1).getTime()
-
+  
         const principal =
           Math.max(
             0,
             Number(r.principalPaid ?? r.scheduledPrincipal ?? 0) -
               Number(r.prepayment ?? r.prepaymentPrincipal ?? 0)
           ) * pct
-
+  
         const interest = (Number(r.interest) || 0) * pct
         const fees = (Number(r.feeThisMonth) || 0) * pct
         const net = principal + interest - fees
-
+  
         monthlyNet.set(ts, net)
-
-        const existing = monthlyBreakdownByTs.get(ts) ?? {
-          principal: 0,
-          interest: 0,
-          fees: 0,
-          net: 0,
-        }
-
-        monthlyBreakdownByTs.set(ts, {
-          principal: existing.principal + principal,
-          interest: existing.interest + interest,
-          fees: existing.fees + fees,
-          net: existing.net + net,
-        })
       })
-
+  
       let running = 0
       const cumulativeNet = new Map<number, number>()
-
+  
       allDates.forEach(d => {
         const ts = d.getTime()
         running += monthlyNet.get(ts) ?? 0
         cumulativeNet.set(ts, running)
       })
-
+  
       return {
         loanId: id,
         name: loan.loanName ?? loan.name ?? id,
@@ -387,7 +364,57 @@ function EarningsColumn({ earningsKpis, loansWithRoi }: EarningsColumnProps) {
         cumulativeNet,
       }
     })
-
+  
+    let runningPrincipal = 0
+    let runningInterest = 0
+    let runningFees = 0
+    let runningNet = 0
+  
+    allDates.forEach(d => {
+      const ts = d.getTime()
+  
+      let monthPrincipal = 0
+      let monthInterest = 0
+      let monthFees = 0
+  
+      loansWithRoi.forEach((loan: any) => {
+        const pct = getOwnershipPct(loan)
+        const sched: any[] = (loan.amort?.schedule ?? []).filter(
+          (r: any) => r.isOwned && r.loanDate instanceof Date
+        )
+  
+        const row = sched.find(
+          (r: any) =>
+            r.loanDate.getFullYear() === d.getFullYear() &&
+            r.loanDate.getMonth() === d.getMonth()
+        )
+  
+        if (!row) return
+  
+        monthPrincipal +=
+          Math.max(
+            0,
+            Number(row.principalPaid ?? row.scheduledPrincipal ?? 0) -
+              Number(row.prepayment ?? row.prepaymentPrincipal ?? 0)
+          ) * pct
+  
+        monthInterest += (Number(row.interest) || 0) * pct
+        monthFees += (Number(row.feeThisMonth) || 0) * pct
+      })
+  
+      runningPrincipal += monthPrincipal
+      runningInterest += monthInterest
+      runningFees += monthFees
+      runningNet = runningPrincipal + runningInterest - runningFees
+  
+      monthlyBreakdownByTs.set(ts, {
+        principal: runningPrincipal,
+        interest: runningInterest,
+        fees: runningFees,
+        net: runningNet,
+      })
+    })
+  
     return { stackedSeries, allDates, monthlyBreakdownByTs }
   }, [loansWithRoi])
 
@@ -567,53 +594,53 @@ function EarningsColumn({ earningsKpis, loansWithRoi }: EarningsColumnProps) {
               </svg>
 
               {hovStack && (() => {
-                const breakdown = monthlyBreakdownByTs.get(hovStack.ts) ?? {
-                  principal: 0,
-                  interest: 0,
-                  fees: 0,
-                  net: 0,
-                }
+  const breakdown = monthlyBreakdownByTs.get(hovStack.ts) ?? {
+    principal: 0,
+    interest: 0,
+    fees: 0,
+    net: 0,
+  }
 
-                return (
-                  <div
-                    onClick={e => e.stopPropagation()}
-                    style={{
-                      position: 'fixed',
-                      left: mousePos.x + 14,
-                      top: mousePos.y - 14,
-                      transform: 'translateY(-100%)',
-                      background: '#1e293b',
-                      color: '#fff',
-                      borderRadius: 8,
-                      padding: '10px 14px',
-                      fontSize: 12,
-                      lineHeight: 1.7,
-                      boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
-                      pointerEvents: 'none',
-                      zIndex: 9999,
-                      minWidth: 220,
-                      maxWidth: 300,
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontWeight: 700,
-                        fontSize: 13,
-                        marginBottom: 4,
-                        borderBottom: '1px solid rgba(255,255,255,0.15)',
-                        paddingBottom: 6,
-                      }}
-                    >
-                      Date: {fmtMY(hovStack.date)}
-                    </div>
+  return (
+    <div
+      onClick={e => e.stopPropagation()}
+      style={{
+        position: 'fixed',
+        left: mousePos.x + 14,
+        top: mousePos.y - 14,
+        transform: 'translateY(-100%)',
+        background: '#1e293b',
+        color: '#fff',
+        borderRadius: 8,
+        padding: '10px 14px',
+        fontSize: 12,
+        lineHeight: 1.7,
+        boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+        pointerEvents: 'none',
+        zIndex: 9999,
+        minWidth: 220,
+        maxWidth: 300,
+      }}
+    >
+      <div
+        style={{
+          fontWeight: 700,
+          fontSize: 13,
+          marginBottom: 4,
+          borderBottom: '1px solid rgba(255,255,255,0.15)',
+          paddingBottom: 6,
+        }}
+      >
+        Date: {fmtMY(hovStack.date)}
+      </div>
 
-                    <div>Principal: <b>{fmt$(breakdown.principal)}</b></div>
-                    <div>Interest: <b>{fmt$(breakdown.interest)}</b></div>
-                    <div>Fees: <b>{breakdown.fees === 0 ? '-$0.00' : `-${fmt$(breakdown.fees)}`}</b></div>
-                    <div>Total Net: <b>{fmt$(breakdown.net)}</b></div>
-                  </div>
-                )
-              })()}
+      <div>Principal: <b>{fmt$(breakdown.principal)}</b></div>
+      <div>Interest: <b>{fmt$(breakdown.interest)}</b></div>
+      <div>Fees: <b>{breakdown.fees === 0 ? '-$0.00' : `-${fmt$(breakdown.fees)}`}</b></div>
+      <div>Cumulative Net: <b>{fmt$(breakdown.net)}</b></div>
+    </div>
+  )
+})()}
             </>
           ) : (
             <div
