@@ -139,6 +139,7 @@ function StackedBarChart({
   focusedId,
   showTodayLine = true,
   compact = false,
+  tooltipMode = 'portfolio',
 }: {
   series: BarSeries[]
   dates: Date[]
@@ -148,6 +149,7 @@ function StackedBarChart({
   focusedId?: string | null
   showTodayLine?: boolean
   compact?: boolean
+  tooltipMode?: 'portfolio' | 'loan-breakdown'
 }) {
   const [hovered, setHovered] = useState<{ idx: number; x: number; y: number } | null>(null)
 
@@ -332,19 +334,47 @@ function StackedBarChart({
       {hovStack && hovered && (() => {
   const activeSeries = series.filter(s => !visibleIds || visibleIds.has(s.loanId))
 
-  const principalVal =
-    activeSeries.find(s => s.loanId === 'principal')?.data.get(hovStack.ts) ?? 0
+  const cumulativeNet =
+    (stacks[hovStack.idx]?.posTotal ?? 0) + (stacks[hovStack.idx]?.negTotal ?? 0)
 
-  const interestVal =
-    activeSeries.find(s => s.loanId === 'interest')?.data.get(hovStack.ts) ?? 0
+  if (tooltipMode === 'loan-breakdown') {
+    const principalVal =
+      activeSeries.find(s => s.loanId === 'principal')?.data.get(hovStack.ts) ?? 0
 
-  const feesRaw =
-    activeSeries.find(s => s.loanId === 'fees')?.data.get(hovStack.ts) ?? 0
+    const interestVal =
+      activeSeries.find(s => s.loanId === 'interest')?.data.get(hovStack.ts) ?? 0
 
-  const feesVal = Math.abs(feesRaw)
-  const monthNet = principalVal + interestVal - feesVal
+    const feesRaw =
+      activeSeries.find(s => s.loanId === 'fees')?.data.get(hovStack.ts) ?? 0
 
-  const cumulativeNet = stacks[hovStack.idx]?.total ?? 0
+    const feesVal = Math.abs(feesRaw)
+    const monthNet = principalVal + interestVal - feesVal
+
+    return (
+      <Tooltip x={hovered.x} y={hovered.y}>
+        <div
+          style={{
+            fontWeight: 700,
+            fontSize: 13,
+            marginBottom: 6,
+            borderBottom: '1px solid rgba(255,255,255,0.15)',
+            paddingBottom: 6,
+          }}
+        >
+          Date: {fmtMY(hovStack.date)}
+        </div>
+
+        <div>Principal: <b>{fmt$(principalVal)}</b></div>
+        <div>Interest: <b>{fmt$(interestVal)}</b></div>
+        <div>Fees: <b>{feesVal === 0 ? '-$0.00' : `-${fmt$(feesVal)}`}</b></div>
+        <div>Total Net: <b>{fmt$(monthNet)}</b></div>
+        <div>Cumulative Net: <b>{fmt$(cumulativeNet)}</b></div>
+      </Tooltip>
+    )
+  }
+
+  const visibleBars = hovStack.bars.filter(b => b.val !== 0)
+  const monthNet = activeSeries.reduce((x, s) => x + (s.data.get(hovStack.ts) ?? 0), 0)
 
   return (
     <Tooltip x={hovered.x} y={hovered.y}>
@@ -352,30 +382,47 @@ function StackedBarChart({
         style={{
           fontWeight: 700,
           fontSize: 13,
-          marginBottom: 6,
+          marginBottom: 4,
           borderBottom: '1px solid rgba(255,255,255,0.15)',
           paddingBottom: 6,
         }}
       >
-        Date: {fmtMY(hovStack.date)}
+        {fmtMY(hovStack.date)}
       </div>
 
-      <div>Principal: <b>{fmt$(principalVal)}</b></div>
-      <div>Interest: <b>{fmt$(interestVal)}</b></div>
-      <div>Fees: <b>{feesVal === 0 ? '-$0.00' : `-${fmt$(feesVal)}`}</b></div>
-      <div>Total Net: <b>{fmt$(monthNet)}</b></div>
+      <div
+        style={{
+          marginBottom: 6,
+          borderBottom: '1px solid rgba(255,255,255,0.12)',
+          paddingBottom: 6,
+        }}
+      >
+        <div>Month Net: <b>{fmt$(monthNet)}</b></div>
+        <div>Cumulative: <b>{fmt$(cumulativeNet)}</b></div>
+      </div>
 
-      {!compact && (
-        <div
-          style={{
-            marginTop: 6,
-            paddingTop: 6,
-            borderTop: '1px solid rgba(255,255,255,0.12)',
-          }}
-        >
-          Cumulative Net: <b>{fmt$(cumulativeNet)}</b>
-        </div>
-      )}
+      {!compact &&
+        visibleBars
+          .sort((a, b) => Math.abs(b.val) - Math.abs(a.val))
+          .map(bar => {
+            const s = series.find(s => s.loanId === bar.loanId)
+            const dispVal = s?.data.get(hovStack.ts) ?? bar.val
+            return (
+              <div key={bar.loanId} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span
+                  style={{
+                    width: 8,
+                    height: 8,
+                    background: bar.color,
+                    borderRadius: 2,
+                    flexShrink: 0,
+                  }}
+                />
+                <span style={{ color: '#94a3b8', fontSize: 11, flex: 1 }}>{s?.name}</span>
+                <span style={{ fontWeight: 600 }}>{fmt$(dispVal)}</span>
+              </div>
+            )
+          })}
     </Tooltip>
   )
 })()}
@@ -573,14 +620,15 @@ function LoanEarningsDrawerBody({ loan }: { loan: any }) {
   return (
     <>
       <ChartBox>
-        <StackedBarChart
-          series={[principalSeries, interestSeries, feesSeries]}
-          dates={chartDates}
-          height={240}
-          cumulative
-          showTodayLine
-          visibleIds={new Set(['principal', 'interest', 'fees'])}
-        />
+      <StackedBarChart
+  series={[principalSeries, interestSeries, feesSeries]}
+  dates={chartDates}
+  height={240}
+  cumulative
+  showTodayLine
+  visibleIds={new Set(['principal', 'interest', 'fees'])}
+  tooltipMode="loan-breakdown"
+/>
       </ChartBox>
 
       <StatBar items={[
