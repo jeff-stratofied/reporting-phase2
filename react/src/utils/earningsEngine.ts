@@ -138,6 +138,7 @@ import { resolveFeeWaiverFlags } from './feePolicy.ts'
     let cumPrincipal = 0
     let cumInterest = 0
     let cumFees = 0
+    let prevCumPrincipal = 0
     let prevCumInterest = 0
     let prevCumFees = 0
   
