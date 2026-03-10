@@ -23,6 +23,52 @@ const formatCurrency = (value: number) =>
     maximumFractionDigits: 0
   })
 
+  
+  function getRowMonthlyNet(r: any): number {
+    if (r.monthlyNet !== undefined) return Number(r.monthlyNet ?? 0)
+  
+    const pct = Number(r.ownershipPct ?? 1)
+    const principal =
+      Math.max(
+        0,
+        Number(r.principalPaid ?? r.scheduledPrincipal ?? 0) -
+          Number(r.prepayment ?? r.prepaymentPrincipal ?? 0)
+      ) * pct
+    const interest = (Number(r.interest) || 0) * pct
+    const fee = (Number(r.feeThisMonth) || 0) * pct
+  
+    return principal + interest - fee
+  }
+  
+  function getRowMonthlyPrincipal(r: any): number {
+    if (r.monthlyPrincipal !== undefined) return Number(r.monthlyPrincipal ?? 0)
+  
+    const pct = Number(r.ownershipPct ?? 1)
+    return (
+      Math.max(
+        0,
+        Number(r.principalPaid ?? r.scheduledPrincipal ?? 0) -
+          Number(r.prepayment ?? r.prepaymentPrincipal ?? 0)
+      ) * pct
+    )
+  }
+  
+  function getRowMonthlyInterest(r: any): number {
+    if (r.monthlyInterest !== undefined) return Number(r.monthlyInterest ?? 0)
+  
+    const pct = Number(r.ownershipPct ?? 1)
+    return (Number(r.interest) || 0) * pct
+  }
+  
+  function getRowMonthlyFees(r: any): number {
+    if (r.monthlyFees !== undefined) return Number(r.monthlyFees ?? 0)
+  
+    const pct = Number(r.ownershipPct ?? 1)
+    return (Number(r.feeThisMonth) || 0) * pct
+  }
+
+
+
 // ─── ROI Column ──────────────────────────────────────────────
 type RoiKpiKey = 'kpi1' | 'kpi2' | 'kpi3' | 'kpi4'
 
@@ -246,24 +292,19 @@ function EarningsColumn({ earningsKpis, loansWithRoi }: EarningsColumnProps) {
   const navigate = useNavigate()
 
   const kpis: { key: EarningsKpiKey; label: string; value: string }[] = [
-    { key: 'kpi1', label: 'Net Earnings to Date',          value: formatDollar(earningsKpis.netEarningsToDate) },
-    { key: 'kpi2', label: 'Projected Lifetime Earnings',   value: formatDollar(earningsKpis.projectedLifetimeEarnings) },
-    { key: 'kpi3', label: 'Avg Monthly Earnings to Date',  value: formatDollar(earningsKpis.avgMonthlyEarningsToDate) },
-    { key: 'kpi4', label: 'Projected Avg Monthly',         value: formatDollar(earningsKpis.projectedAvgMonthlyEarnings) },
+    { key: 'kpi1', label: 'Net Earnings to Date', value: formatDollar(earningsKpis.netEarningsToDate) },
+    { key: 'kpi2', label: 'Projected Lifetime Earnings', value: formatDollar(earningsKpis.projectedLifetimeEarnings) },
+    { key: 'kpi3', label: 'Avg Monthly Earnings to Date', value: formatDollar(earningsKpis.avgMonthlyEarningsToDate) },
+    { key: 'kpi4', label: 'Projected Avg Monthly', value: formatDollar(earningsKpis.projectedAvgMonthlyEarnings) },
   ]
 
   function getOwnershipPct(loan: any): number {
     return Number(loan.ownershipPct ?? loan.userOwnershipPct ?? 1)
   }
 
-  function rowNet(r: any, pct: number): number {
-    const principal = Math.max(0, (Number(r.principalPaid) || 0) - (Number(r.prepayment) || 0))
-    return (principal + (Number(r.interest) || 0) - (Number(r.feeThisMonth) || 0)) * pct
-  }
-
-  const { stackedSeries, allDates, rawMonthlyByLoan } = useMemo(() => {
+  const { stackedSeries, allDates, monthlyBreakdownByTs } = useMemo(() => {
     const allMs = new Set<number>()
-  
+
     loansWithRoi.forEach((l: any) => {
       ;(l.amort?.schedule ?? []).forEach((r: any) => {
         if (r.isOwned && r.loanDate instanceof Date) {
@@ -271,36 +312,74 @@ function EarningsColumn({ earningsKpis, loansWithRoi }: EarningsColumnProps) {
         }
       })
     })
-  
-    const allDates = Array.from(allMs)
-      .sort((a, b) => a - b)
-      .map(t => new Date(t))
-  
-    const rawMonthlyByLoan = new Map<string, Map<number, number>>()
-  
+
+    const allDates = Array.from(allMs).sort((a, b) => a - b).map(t => new Date(t))
+
+    const monthlyBreakdownByTs = new Map<number, {
+      principal: number
+      interest: number
+      fees: number
+      net: number
+    }>()
+
+    allDates.forEach(d => {
+      monthlyBreakdownByTs.set(d.getTime(), {
+        principal: 0,
+        interest: 0,
+        fees: 0,
+        net: 0,
+      })
+    })
+
     const stackedSeries = loansWithRoi.map((loan: any) => {
       const id = String(loan.loanId ?? loan.id ?? '')
       const pct = getOwnershipPct(loan)
       const sched: any[] = (loan.amort?.schedule ?? []).filter(
         (r: any) => r.isOwned && r.loanDate instanceof Date
       )
-  
+
       const monthlyNet = new Map<number, number>()
+
       sched.forEach(r => {
         const ts = new Date(r.loanDate.getFullYear(), r.loanDate.getMonth(), 1).getTime()
-        monthlyNet.set(ts, rowNet(r, pct))
+
+        const principal =
+          Math.max(
+            0,
+            Number(r.principalPaid ?? r.scheduledPrincipal ?? 0) -
+              Number(r.prepayment ?? r.prepaymentPrincipal ?? 0)
+          ) * pct
+
+        const interest = (Number(r.interest) || 0) * pct
+        const fees = (Number(r.feeThisMonth) || 0) * pct
+        const net = principal + interest - fees
+
+        monthlyNet.set(ts, net)
+
+        const existing = monthlyBreakdownByTs.get(ts) ?? {
+          principal: 0,
+          interest: 0,
+          fees: 0,
+          net: 0,
+        }
+
+        monthlyBreakdownByTs.set(ts, {
+          principal: existing.principal + principal,
+          interest: existing.interest + interest,
+          fees: existing.fees + fees,
+          net: existing.net + net,
+        })
       })
-  
-      rawMonthlyByLoan.set(id, monthlyNet)
-  
+
       let running = 0
       const cumulativeNet = new Map<number, number>()
+
       allDates.forEach(d => {
         const ts = d.getTime()
         running += monthlyNet.get(ts) ?? 0
         cumulativeNet.set(ts, running)
       })
-  
+
       return {
         loanId: id,
         name: loan.loanName ?? loan.name ?? id,
@@ -308,13 +387,14 @@ function EarningsColumn({ earningsKpis, loansWithRoi }: EarningsColumnProps) {
         cumulativeNet,
       }
     })
-  
-    return { stackedSeries, allDates, rawMonthlyByLoan }
+
+    return { stackedSeries, allDates, monthlyBreakdownByTs }
   }, [loansWithRoi])
 
   const MINI_H = 230
   const MINI_PAD = { top: 10, right: 8, bottom: 28, left: 52 }
-  const W = 400, H = MINI_H
+  const W = 400
+  const H = MINI_H
   const chartW = W - MINI_PAD.left - MINI_PAD.right
   const chartH = H - MINI_PAD.top - MINI_PAD.bottom
 
@@ -322,14 +402,14 @@ function EarningsColumn({ earningsKpis, loansWithRoi }: EarningsColumnProps) {
     return allDates.map((d, idx) => {
       const ts = d.getTime()
       let cumulative = 0
-  
+
       const bars = stackedSeries.map(s => {
         const val = s.cumulativeNet.get(ts) ?? 0
         const bottom = cumulative
         cumulative += Math.max(0, val)
         return { loanId: s.loanId, name: s.name, color: s.color, val, bottom, top: cumulative }
       })
-  
+
       return { idx, date: d, ts, total: cumulative, bars }
     })
   }, [stackedSeries, allDates])
@@ -344,8 +424,11 @@ function EarningsColumn({ earningsKpis, loansWithRoi }: EarningsColumnProps) {
   const xTicks = allDates.map((d, i) => ({ d, i })).filter(({ i }) => i % xTickStep === 0)
   const yTicks = [0, 0.5, 1].map(f => ({ v: f * maxVal, y: yScale(f * maxVal) }))
 
-  const fmt$ = (v: number) => '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  const fmtMY = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+  const fmt$ = (v: number) =>
+    '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+  const fmtMY = (d: Date) =>
+    d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
 
   const hovStack = hoveredBarIdx !== null ? stacks[hoveredBarIdx] : null
 
@@ -353,7 +436,9 @@ function EarningsColumn({ earningsKpis, loansWithRoi }: EarningsColumnProps) {
     <div style={colStyle}>
       <div style={colHeaderStyle}>
         <div style={{ fontWeight: 700, fontSize: 16 }}>Earnings</div>
-        <div style={{ fontSize: 13, color: '#64748b', marginTop: 2 }}>Cash flow and projected returns</div>
+        <div style={{ fontSize: 13, color: '#64748b', marginTop: 2 }}>
+          Cash flow and projected returns
+        </div>
       </div>
 
       <div style={kpiGridStyle}>
@@ -362,9 +447,10 @@ function EarningsColumn({ earningsKpis, loansWithRoi }: EarningsColumnProps) {
             key={k.key}
             style={{
               ...kpiTileStyle,
-              boxShadow: hoveredKpi === k.key
-                ? '0 8px 24px rgba(15,23,42,0.13)'
-                : '0 2px 6px rgba(15,23,42,0.05)',
+              boxShadow:
+                hoveredKpi === k.key
+                  ? '0 8px 24px rgba(15,23,42,0.13)'
+                  : '0 2px 6px rgba(15,23,42,0.05)',
               transform: hoveredKpi === k.key ? 'translateY(-3px)' : 'translateY(0)',
             }}
             onClick={() => navigate(`/earnings?kpi=${k.key}`)}
@@ -380,7 +466,9 @@ function EarningsColumn({ earningsKpis, loansWithRoi }: EarningsColumnProps) {
       <div style={drawerStyle}>
         <div style={drawerHeadStyle}>
           <div style={{ fontWeight: 700, fontSize: 16 }}>Projected Total Net Earnings</div>
-          <div style={{ fontSize: 13, color: '#64748b', marginTop: 2 }}>Projected lifetime earnings across all loans</div>
+          <div style={{ fontSize: 13, color: '#64748b', marginTop: 2 }}>
+            Projected lifetime earnings across all loans
+          </div>
         </div>
 
         <div
@@ -390,128 +478,192 @@ function EarningsColumn({ earningsKpis, loansWithRoi }: EarningsColumnProps) {
         >
           {allDates.length > 0 ? (
             <>
-              <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: MINI_H }}
+              <svg
+                viewBox={`0 0 ${W} ${H}`}
+                style={{ width: '100%', height: MINI_H }}
                 onMouseLeave={() => setHoveredBarIdx(null)}
               >
                 {yTicks.map(t => (
                   <g key={t.v}>
-                    <line x1={MINI_PAD.left} x2={W - MINI_PAD.right} y1={t.y} y2={t.y} stroke="#e2e8f0" strokeWidth={0.5} />
-                    <text x={MINI_PAD.left - 4} y={t.y + 3} textAnchor="end" fontSize={8} fill="#94a3b8">
+                    <line
+                      x1={MINI_PAD.left}
+                      x2={W - MINI_PAD.right}
+                      y1={t.y}
+                      y2={t.y}
+                      stroke="#e2e8f0"
+                      strokeWidth={0.5}
+                    />
+                    <text
+                      x={MINI_PAD.left - 4}
+                      y={t.y + 3}
+                      textAnchor="end"
+                      fontSize={8}
+                      fill="#94a3b8"
+                    >
                       {t.v >= 1000 ? `$${(t.v / 1000).toFixed(0)}k` : `$${t.v.toFixed(0)}`}
                     </text>
                   </g>
                 ))}
+
                 {stacks.map(stack => {
                   const cx = xScale(stack.idx)
                   const isHov = hoveredBarIdx === stack.idx
+
                   return (
-                    <g key={stack.idx}
+                    <g
+                      key={stack.idx}
                       onMouseMove={e => {
                         e.stopPropagation()
                         setHoveredBarIdx(stack.idx)
                         setMousePos({ x: e.clientX, y: e.clientY })
                       }}
                     >
-                      <rect x={cx - barW / 2 - 4} y={MINI_PAD.top} width={barW + 8} height={chartH} fill="transparent" />
+                      <rect
+                        x={cx - barW / 2 - 4}
+                        y={MINI_PAD.top}
+                        width={barW + 8}
+                        height={chartH}
+                        fill="transparent"
+                      />
+
                       {stack.bars.map(bar => {
                         if (bar.val <= 0) return null
+
                         const bY = yScale(bar.top)
                         const bH = yScale(bar.bottom) - bY
-                        const isBarFocused = focusedLoanId !== null && String(focusedLoanId) === String(bar.loanId)
-                        const isBarDimmed  = focusedLoanId !== null && !isBarFocused
-                        const opacity = isBarDimmed ? 0.2 : (isHov || isBarFocused ? 1 : 0.85)
+                        const isBarFocused =
+                          focusedLoanId !== null && String(focusedLoanId) === String(bar.loanId)
+                        const isBarDimmed = focusedLoanId !== null && !isBarFocused
+                        const opacity = isBarDimmed ? 0.2 : isHov || isBarFocused ? 1 : 0.85
+
                         return (
-                          <rect key={bar.loanId} x={cx - barW / 2} y={bY} width={barW} height={Math.max(0, bH)}
-                            fill={bar.color} opacity={opacity} />
+                          <rect
+                            key={bar.loanId}
+                            x={cx - barW / 2}
+                            y={bY}
+                            width={barW}
+                            height={Math.max(0, bH)}
+                            fill={bar.color}
+                            opacity={opacity}
+                          />
                         )
                       })}
                     </g>
                   )
                 })}
+
                 {xTicks.map(({ d, i }) => (
-                  <text key={i} x={xScale(i)} y={H - MINI_PAD.bottom + 12} textAnchor="middle" fontSize={8} fill="#94a3b8">
+                  <text
+                    key={i}
+                    x={xScale(i)}
+                    y={H - MINI_PAD.bottom + 12}
+                    textAnchor="middle"
+                    fontSize={8}
+                    fill="#94a3b8"
+                  >
                     {d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })}
                   </text>
                 ))}
               </svg>
 
-              {hovStack && (
-                <div
-                  onClick={e => e.stopPropagation()}
-                  style={{
-                    position: 'fixed',
-                    left: mousePos.x + 14,
-                    top: mousePos.y - 14,
-                    transform: 'translateY(-100%)',
-                    background: '#1e293b', color: '#fff', borderRadius: 8,
-                    padding: '10px 14px', fontSize: 12, lineHeight: 1.7,
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.35)', pointerEvents: 'none', zIndex: 9999,
-                    minWidth: 200, maxWidth: 280,
-                  }}
-                >
-                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 4, borderBottom: '1px solid rgba(255,255,255,0.15)', paddingBottom: 6 }}>
-                    {fmtMY(hovStack.date)}
+              {hovStack && (() => {
+                const breakdown = monthlyBreakdownByTs.get(hovStack.ts) ?? {
+                  principal: 0,
+                  interest: 0,
+                  fees: 0,
+                  net: 0,
+                }
+
+                return (
+                  <div
+                    onClick={e => e.stopPropagation()}
+                    style={{
+                      position: 'fixed',
+                      left: mousePos.x + 14,
+                      top: mousePos.y - 14,
+                      transform: 'translateY(-100%)',
+                      background: '#1e293b',
+                      color: '#fff',
+                      borderRadius: 8,
+                      padding: '10px 14px',
+                      fontSize: 12,
+                      lineHeight: 1.7,
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+                      pointerEvents: 'none',
+                      zIndex: 9999,
+                      minWidth: 220,
+                      maxWidth: 300,
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontWeight: 700,
+                        fontSize: 13,
+                        marginBottom: 4,
+                        borderBottom: '1px solid rgba(255,255,255,0.15)',
+                        paddingBottom: 6,
+                      }}
+                    >
+                      Date: {fmtMY(hovStack.date)}
+                    </div>
+
+                    <div>Principal: <b>{fmt$(breakdown.principal)}</b></div>
+                    <div>Interest: <b>{fmt$(breakdown.interest)}</b></div>
+                    <div>Fees: <b>{breakdown.fees === 0 ? '-$0.00' : `-${fmt$(breakdown.fees)}`}</b></div>
+                    <div>Total Net: <b>{fmt$(breakdown.net)}</b></div>
                   </div>
-                  <div style={{ marginBottom: 6, borderBottom: '1px solid rgba(255,255,255,0.12)', paddingBottom: 6 }}>
-                  <div>
-  Month Net:{' '}
-  <b>{fmt$(
-    stackedSeries.reduce((sum, s) => {
-      const raw = rawMonthlyByLoan.get(s.loanId)
-      return sum + (raw?.get(hovStack.ts) ?? 0)
-    }, 0)
-  )}</b>
-</div>
-<div>Cumulative: <b>{fmt$(hovStack.total)}</b></div>
-                  </div>
-                  {hovStack.bars
-  .filter(b => b.val > 0)
-  .sort((a, b) => b.val - a.val)
-  .map(bar => {
-    const raw = rawMonthlyByLoan.get(bar.loanId)
-    const monthVal = raw?.get(hovStack.ts) ?? 0
-    return (
-                      <div key={bar.loanId} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ width: 8, height: 8, background: bar.color, borderRadius: 2, flexShrink: 0 }} />
-                        <span style={{ color: '#94a3b8', fontSize: 11, flex: 1 }}>{bar.name}</span>
-                        <span style={{ fontWeight: 600 }}>{fmt$(monthVal)}</span>
-                      </div>
-                        )
-                      })
-                    }
-                </div>
-              )}
+                )
+              })()}
             </>
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#94a3b8', fontSize: 13 }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                color: '#94a3b8',
+                fontSize: 13,
+              }}
+            >
               No earnings data
             </div>
           )}
         </div>
 
         <div style={{ display: 'flex', gap: 10, padding: '10px 12px 0' }}>
-  <div style={infoCardStyle}>
-    <div style={infoLabelStyle}>Projected Lifetime Earnings</div>
-    <div style={infoValueStyle}>{formatDollar(earningsKpis.projectedLifetimeEarnings)}</div>
-  </div>
-  <div style={{ ...infoCardStyle, width: 180, flexShrink: 0 }}>
-    <div style={infoLabelStyle}>Projected Total Fees</div>
-    <div style={infoValueStyle}>
-      {formatDollar(
-        loansWithRoi.reduce((sum, loan) => {
-          const sched = loan.earningsSchedule ?? loan.displayEarningsTimeline ?? loan.amort?.schedule ?? []
-          return sum + sched.reduce((s: number, r: any) => {
-            const fee =
-              r.monthlyFees !== undefined
-                ? Number(r.monthlyFees ?? 0)
-                : Number(r.feeThisMonth ?? 0) * Number(r.ownershipPct ?? 1)
-            return s + fee
-          }, 0)
-        }, 0)
-      )}
-    </div>
-  </div>
-</div>
+          <div style={infoCardStyle}>
+            <div style={infoLabelStyle}>Projected Lifetime Earnings</div>
+            <div style={infoValueStyle}>{formatDollar(earningsKpis.projectedLifetimeEarnings)}</div>
+          </div>
+
+          <div style={{ ...infoCardStyle, width: 180, flexShrink: 0 }}>
+            <div style={infoLabelStyle}>Projected Total Fees</div>
+            <div style={infoValueStyle}>
+              {formatDollar(
+                loansWithRoi.reduce((sum, loan) => {
+                  const sched =
+                    loan.earningsSchedule ??
+                    loan.displayEarningsTimeline ??
+                    loan.amort?.schedule ??
+                    []
+
+                  return (
+                    sum +
+                    sched.reduce((s: number, r: any) => {
+                      const fee =
+                        r.monthlyFees !== undefined
+                          ? Number(r.monthlyFees ?? 0)
+                          : Number(r.feeThisMonth ?? 0) * Number(r.ownershipPct ?? 1)
+
+                      return s + fee
+                    }, 0)
+                  )
+                }, 0)
+              )}
+            </div>
+          </div>
+        </div>
 
         <EarningsLoanTable
           loansWithRoi={loansWithRoi}
