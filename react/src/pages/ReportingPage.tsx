@@ -261,34 +261,55 @@ function EarningsColumn({ earningsKpis, loansWithRoi }: EarningsColumnProps) {
     return (principal + (Number(r.interest) || 0) - (Number(r.feeThisMonth) || 0)) * pct
   }
 
-  const { stackedSeries, allDates } = useMemo(() => {
+  const { stackedSeries, allDates, rawMonthlyByLoan } = useMemo(() => {
     const allMs = new Set<number>()
+  
     loansWithRoi.forEach((l: any) => {
       ;(l.amort?.schedule ?? []).forEach((r: any) => {
-        if (r.isOwned && r.loanDate instanceof Date)
+        if (r.isOwned && r.loanDate instanceof Date) {
           allMs.add(new Date(r.loanDate.getFullYear(), r.loanDate.getMonth(), 1).getTime())
+        }
       })
     })
-    const allDates = Array.from(allMs).sort((a, b) => a - b).map(t => new Date(t))
-
+  
+    const allDates = Array.from(allMs)
+      .sort((a, b) => a - b)
+      .map(t => new Date(t))
+  
+    const rawMonthlyByLoan = new Map<string, Map<number, number>>()
+  
     const stackedSeries = loansWithRoi.map((loan: any) => {
-      const id  = String(loan.loanId ?? loan.id ?? '')
+      const id = String(loan.loanId ?? loan.id ?? '')
       const pct = getOwnershipPct(loan)
-      const sched: any[] = (loan.amort?.schedule ?? []).filter((r: any) => r.isOwned && r.loanDate instanceof Date)
+      const sched: any[] = (loan.amort?.schedule ?? []).filter(
+        (r: any) => r.isOwned && r.loanDate instanceof Date
+      )
+  
       const monthlyNet = new Map<number, number>()
       sched.forEach(r => {
         const ts = new Date(r.loanDate.getFullYear(), r.loanDate.getMonth(), 1).getTime()
         monthlyNet.set(ts, rowNet(r, pct))
       })
+  
+      rawMonthlyByLoan.set(id, monthlyNet)
+  
+      let running = 0
+      const cumulativeNet = new Map<number, number>()
+      allDates.forEach(d => {
+        const ts = d.getTime()
+        running += monthlyNet.get(ts) ?? 0
+        cumulativeNet.set(ts, running)
+      })
+  
       return {
         loanId: id,
         name: loan.loanName ?? loan.name ?? id,
         color: loan.loanColor ?? loan.color ?? '#64748b',
-        monthlyNet,
+        cumulativeNet,
       }
     })
-
-    return { stackedSeries, allDates }
+  
+    return { stackedSeries, allDates, rawMonthlyByLoan }
   }, [loansWithRoi])
 
   const MINI_H = 230
@@ -301,12 +322,14 @@ function EarningsColumn({ earningsKpis, loansWithRoi }: EarningsColumnProps) {
     return allDates.map((d, idx) => {
       const ts = d.getTime()
       let cumulative = 0
+  
       const bars = stackedSeries.map(s => {
-        const val = s.monthlyNet.get(ts) ?? 0
+        const val = s.cumulativeNet.get(ts) ?? 0
         const bottom = cumulative
         cumulative += Math.max(0, val)
         return { loanId: s.loanId, name: s.name, color: s.color, val, bottom, top: cumulative }
       })
+  
       return { idx, date: d, ts, total: cumulative, bars }
     })
   }, [stackedSeries, allDates])
@@ -430,22 +453,32 @@ function EarningsColumn({ earningsKpis, loansWithRoi }: EarningsColumnProps) {
                     {fmtMY(hovStack.date)}
                   </div>
                   <div style={{ marginBottom: 6, borderBottom: '1px solid rgba(255,255,255,0.12)', paddingBottom: 6 }}>
-                    <div>Month Net: <b>{fmt$(hovStack.total)}</b></div>
-                    <div>Cumulative: <b>{fmt$(
-                      stacks.slice(0, hovStack.idx + 1).reduce((acc, st) => acc + st.total, 0)
-                    )}</b></div>
+                  <div>
+  Month Net:{' '}
+  <b>{fmt$(
+    stackedSeries.reduce((sum, s) => {
+      const raw = rawMonthlyByLoan.get(s.loanId)
+      return sum + (raw?.get(hovStack.ts) ?? 0)
+    }, 0)
+  )}</b>
+</div>
+<div>Cumulative: <b>{fmt$(hovStack.total)}</b></div>
                   </div>
                   {hovStack.bars
-                    .filter(b => b.val > 0)
-                    .sort((a, b) => b.val - a.val)
-                    .map(bar => (
+  .filter(b => b.val > 0)
+  .sort((a, b) => b.val - a.val)
+  .map(bar => {
+    const raw = rawMonthlyByLoan.get(bar.loanId)
+    const monthVal = raw?.get(hovStack.ts) ?? 0
+    return (
                       <div key={bar.loanId} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <span style={{ width: 8, height: 8, background: bar.color, borderRadius: 2, flexShrink: 0 }} />
                         <span style={{ color: '#94a3b8', fontSize: 11, flex: 1 }}>{bar.name}</span>
-                        <span style={{ fontWeight: 600 }}>{fmt$(bar.val)}</span>
+                        <span style={{ fontWeight: 600 }}>{fmt$(monthVal)}</span>
                       </div>
-                    ))
-                  }
+                        )
+                      })
+                    }
                 </div>
               )}
             </>
@@ -1072,7 +1105,9 @@ export default function ReportingPage() {
 
   return (
     <div style={{ padding: '0 0 32px' }}>
-
+      <div style={{ padding: '0 16px 8px', fontSize: 12, color: '#64748b' }}>
+        Viewing portfolio for user: <b>{userId}</b>
+      </div>
       {/* Tabs */}
       <div style={{ borderBottom: '1px solid #e2e8f0', marginBottom: 16 }}>
         <div style={{ display: 'flex', gap: 28, paddingLeft: 4 }}>
