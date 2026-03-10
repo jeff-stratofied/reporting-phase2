@@ -1,16 +1,33 @@
-export let USERS = {}
+type UserRecord = {
+  id: string
+  name: string
+  role: string
+  feeWaiver: string
+}
+
+type PlatformConfigResponse = {
+  users?: Array<{
+    id?: string
+    name?: string
+    role?: string
+    feeWaiver?: string
+    active?: boolean
+  }>
+}
+
+export let USERS: Record<string, UserRecord> = {}
 
 export async function loadUsers(
-  backendUrl = 'https://reporting-phase2-api.jeff-263.workers.dev'
-) {
+  backendUrl = 'https://loan-valuation-api.jeff-263.workers.dev'
+): Promise<void> {
   try {
     const res = await fetch(`${backendUrl}/platformConfig`, { cache: 'no-store' })
     if (!res.ok) throw new Error(`platformConfig fetch failed: ${res.status}`)
 
-    const data = await res.json()
+    const data: PlatformConfigResponse = await res.json()
 
     USERS = {}
-    ;(data.users || []).forEach(u => {
+    ;(data.users || []).forEach((u) => {
       if (u.id && u.active !== false) {
         USERS[u.id] = {
           id: u.id,
@@ -33,14 +50,14 @@ export async function loadUsers(
   }
 }
 
-export function getUserById(userId) {
+export function getUserById(userId: string): UserRecord | null {
   return USERS[userId] || null
 }
 
-export function getUserFeeWaiver(userId) {
+export function getUserFeeWaiver(userId: string): string {
   return USERS[userId]?.feeWaiver || 'none'
 }
 
-export function getUserDisplayName(userId) {
+export function getUserDisplayName(userId: string): string {
   return USERS[userId]?.name || userId || 'Unknown User'
 }
