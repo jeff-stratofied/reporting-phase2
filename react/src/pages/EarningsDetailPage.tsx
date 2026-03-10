@@ -760,7 +760,7 @@ function KpiEarningsDrawerBody({ kpi, loansWithRoi }: { kpi: EarningsKpiKey; loa
   const cfgs = {
     kpi1: {
       stat:  [{ label: 'Net Earnings to Date', value: fmt$(totalNetToDate), flex: 2 }, { label: 'Total Fees to Date', value: fmt$(totalFeesToDate), flex: 1 }],
-      chart: <StackedBarChart series={series} dates={historicDates} height={260} visibleIds={visibleIds} focusedId={focusedId} showTodayLine compact />,
+      chart: <StackedBarChart series={series} dates={historicDates} height={260} cumulative visibleIds={visibleIds} focusedId={focusedId} showTodayLine compact />,
       title: 'Total Net Earnings to Date',
       table: (
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
@@ -782,7 +782,7 @@ function KpiEarningsDrawerBody({ kpi, loansWithRoi }: { kpi: EarningsKpiKey; loa
     },
     kpi2: {
       stat:  [{ label: 'Projected Net Earnings', value: fmt$(totalProjNet), flex: 2 }, { label: 'Projected Total Fees', value: fmt$(totalProjFees), flex: 1 }],
-      chart: <StackedBarChart series={series} dates={allDates} height={260} visibleIds={visibleIds} focusedId={focusedId} showTodayLine compact />,
+      chart: <StackedBarChart series={series} dates={allDates} height={260} cumulative visibleIds={visibleIds} focusedId={focusedId} showTodayLine compact />,
       title: 'Projected Total Net Earnings',
       table: (
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
@@ -863,6 +863,7 @@ function KpiEarningsDrawerBody({ kpi, loansWithRoi }: { kpi: EarningsKpiKey; loa
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
+
 
 export default function EarningsDetailPage() {
   const [searchParams, setSearchParams] = useSearchParams()
