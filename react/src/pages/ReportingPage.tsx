@@ -1072,9 +1072,7 @@ export default function ReportingPage() {
 
   return (
     <div style={{ padding: '0 0 32px' }}>
-      <div style={{ padding: '0 16px 8px', fontSize: 12, color: '#64748b' }}>
-        Viewing portfolio for user: <b>{userId}</b>
-      </div>
+
       {/* Tabs */}
       <div style={{ borderBottom: '1px solid #e2e8f0', marginBottom: 16 }}>
         <div style={{ display: 'flex', gap: 28, paddingLeft: 4 }}>
