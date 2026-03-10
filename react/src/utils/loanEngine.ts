@@ -2,7 +2,7 @@
 // loanEngine.ts
 // ===============================
 
-import { resolveFeeWaiverFlags } from './feePolicy.ts'
+import { resolveFeeWaiverFlags } from '../utils/feePolicy'
 
 // ===============================
 // Types
