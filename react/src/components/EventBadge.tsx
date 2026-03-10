@@ -36,24 +36,37 @@ const ROUND_BG: Record<EventType, { bg: string; color: string }> = {
 function buildTooltipLines(type: EventType, event?: LoanEvent, tooltip?: string): string[] {
   if (tooltip) return [tooltip]
   if (!event) return [EVENT_MAP[type].label]
+
   switch (type) {
     case 'prepayment':
-      return ['Prepayment',
-        ...(event.date   ? [`Date: ${event.date}`]         : []),
+      return [
+        'Prepayment',
+        ...(event.date ? [`Date: ${event.date}`] : []),
         ...(event.amount ? [`Amount: ${fmt$(event.amount)}`] : []),
       ]
+
     case 'deferral':
-      return ['Deferral',
-        ...(event.startDate ? [`Start: ${event.startDate}`] : event.date ? [`Start: ${event.date}`] : []),
-        ...(event.months    ? [`Months: ${event.months}`]   : []),
+      return [
+        'Deferral',
+        ...(event.startDate
+          ? [`Start: ${event.startDate}`]
+          : event.date
+            ? [`Start: ${event.date}`]
+            : []),
+        ...(event.months ? [`Months: ${event.months}`] : []),
       ]
+
     case 'default':
-      return ['Default',
-        ...(event.date      ? [`Date: ${event.date}`]               : []),
-        ...(event.recovered !== undefined ? [`Recovered: ${fmt$(event.recovered)}`] : []),
+      return [
+        'Default',
+        ...(event.date ? [`Date: ${event.date}`] : []),
+        ...(event.recovered !== undefined
+          ? [`Recovered: ${fmt$(event.recovered)}`]
+          : []),
       ]
+
     default:
-      return [EVENT_MAP[type].label]
+      return ['Event']
   }
 }
 
