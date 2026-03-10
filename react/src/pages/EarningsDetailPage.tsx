@@ -330,68 +330,55 @@ function StackedBarChart({
       </svg>
 
       {hovStack && hovered && (() => {
-        const visibleBars = hovStack.bars.filter(b => b.val !== 0)
-        const monthNet = series
-          .filter(s => !visibleIds || visibleIds.has(s.loanId))
-          .reduce((x, s) => x + (s.data.get(hovStack.ts) ?? 0), 0)
+  const activeSeries = series.filter(s => !visibleIds || visibleIds.has(s.loanId))
 
-        const cumNet = stacks.slice(0, hovStack.idx + 1).reduce((acc, st) => {
-          return (
-            acc +
-            series
-              .filter(s => !visibleIds || visibleIds.has(s.loanId))
-              .reduce((x, s) => x + (s.data.get(st.ts) ?? 0), 0)
-          )
-        }, 0)
+  const principalVal =
+    activeSeries.find(s => s.loanId === 'principal')?.data.get(hovStack.ts) ?? 0
 
-        return (
-          <Tooltip x={hovered.x} y={hovered.y}>
-            <div
-              style={{
-                fontWeight: 700,
-                fontSize: 13,
-                marginBottom: 4,
-                borderBottom: '1px solid rgba(255,255,255,0.15)',
-                paddingBottom: 6,
-              }}
-            >
-              {fmtMY(hovStack.date)}
-            </div>
-            <div
-              style={{
-                marginBottom: 6,
-                borderBottom: '1px solid rgba(255,255,255,0.12)',
-                paddingBottom: 6,
-              }}
-            >
-              <div>Month Net: <b>{fmt$(monthNet)}</b></div>
-              <div>Cumulative: <b>{fmt$(cumNet)}</b></div>
-            </div>
-            {!compact &&
-              visibleBars
-              .sort((a, b) => Math.abs(b.val) - Math.abs(a.val))
-              .map(bar => {
-                const s = series.find(s => s.loanId === bar.loanId)
-                const dispVal = s?.data.get(hovStack.ts) ?? bar.val
-                return (
-                  <div key={bar.loanId} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span
-                      style={{
-                        width: 8,
-                        height: 8,
-                        background: bar.color,
-                        borderRadius: 2,
-                        flexShrink: 0,
-                      }}
-                    />
-                    <span style={{ color: '#94a3b8', fontSize: 11, flex: 1 }}>{s?.name}</span>
-                    <span style={{ fontWeight: 600 }}>{fmt$(dispVal)}</span>
-                  </div>
-                )
-              })}
-          </Tooltip>
-        )
-      })()}
+  const interestVal =
+    activeSeries.find(s => s.loanId === 'interest')?.data.get(hovStack.ts) ?? 0
+
+  const feesRaw =
+    activeSeries.find(s => s.loanId === 'fees')?.data.get(hovStack.ts) ?? 0
+
+  const feesVal = Math.abs(feesRaw)
+  const monthNet = principalVal + interestVal - feesVal
+
+  const cumulativeNet = stacks[hovStack.idx]?.total ?? 0
+
+  return (
+    <Tooltip x={hovered.x} y={hovered.y}>
+      <div
+        style={{
+          fontWeight: 700,
+          fontSize: 13,
+          marginBottom: 6,
+          borderBottom: '1px solid rgba(255,255,255,0.15)',
+          paddingBottom: 6,
+        }}
+      >
+        Date: {fmtMY(hovStack.date)}
+      </div>
+
+      <div>Principal: <b>{fmt$(principalVal)}</b></div>
+      <div>Interest: <b>{fmt$(interestVal)}</b></div>
+      <div>Fees: <b>{feesVal === 0 ? '-$0.00' : `-${fmt$(feesVal)}`}</b></div>
+      <div>Total Net: <b>{fmt$(monthNet)}</b></div>
+
+      {!compact && (
+        <div
+          style={{
+            marginTop: 6,
+            paddingTop: 6,
+            borderTop: '1px solid rgba(255,255,255,0.12)',
+          }}
+        >
+          Cumulative Net: <b>{fmt$(cumulativeNet)}</b>
+        </div>
+      )}
+    </Tooltip>
+  )
+})()}
     </div>
   )
 }
