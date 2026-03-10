@@ -6,7 +6,6 @@ import {
   addMonths,
   isDeferredMonth,
   GLOBAL_FEE_CONFIG,
-  getMonthlyServicingRate,
   type AmortRow,
 } from './loanEngine'
 import { resolveFeeWaiverFlags } from './feePolicy.ts'
@@ -81,9 +80,7 @@ import { resolveFeeWaiverFlags } from './feePolicy.ts'
     amortSchedule,
     loanStartDate,
     ownershipLots = [],
-    user,
-    events = [],
-    today,
+    user
   }: {
     amortSchedule: AmortRow[]
     loanStartDate: string
@@ -141,7 +138,6 @@ import { resolveFeeWaiverFlags } from './feePolicy.ts'
     let cumPrincipal = 0
     let cumInterest = 0
     let cumFees = 0
-    let prevCumPrincipal = 0
     let prevCumInterest = 0
     let prevCumFees = 0
   
