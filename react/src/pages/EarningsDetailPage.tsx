@@ -140,6 +140,7 @@ function StackedBarChart({
   showTodayLine = true,
   compact = false,
   tooltipMode = 'portfolio',
+  tooltipBreakdownByTs,
 }: {
   series: BarSeries[]
   dates: Date[]
@@ -150,6 +151,12 @@ function StackedBarChart({
   showTodayLine?: boolean
   compact?: boolean
   tooltipMode?: 'portfolio' | 'loan-breakdown'
+  tooltipBreakdownByTs?: Map<number, {
+    principal: number
+    interest: number
+    fees: number
+    net: number
+  }>
 }) {
   const [hovered, setHovered] = useState<{ idx: number; x: number; y: number } | null>(null)
 
@@ -337,94 +344,117 @@ function StackedBarChart({
   const cumulativeNet =
     (stacks[hovStack.idx]?.posTotal ?? 0) + (stacks[hovStack.idx]?.negTotal ?? 0)
 
-  if (tooltipMode === 'loan-breakdown') {
-    const principalVal =
-      activeSeries.find(s => s.loanId === 'principal')?.data.get(hovStack.ts) ?? 0
+    if (tooltipMode === 'loan-breakdown') {
+      const principalSeries = activeSeries.find(s => s.loanId === 'principal')
+      const interestSeries = activeSeries.find(s => s.loanId === 'interest')
+      const feesSeries = activeSeries.find(s => s.loanId === 'fees')
+    
+      const cumulativePrincipal = principalSeries?.data.get(hovStack.ts) ?? 0
+      const cumulativeInterest = interestSeries?.data.get(hovStack.ts) ?? 0
+      const feesRaw = feesSeries?.data.get(hovStack.ts) ?? 0
+      const cumulativeFees = Math.abs(feesRaw)
+    
+      const cumulativeNet = cumulativePrincipal + cumulativeInterest - cumulativeFees
+    
+      return (
+        <Tooltip x={hovered.x} y={hovered.y}>
+          <div
+            style={{
+              fontWeight: 700,
+              fontSize: 13,
+              marginBottom: 6,
+              borderBottom: '1px solid rgba(255,255,255,0.15)',
+              paddingBottom: 6,
+            }}
+          >
+            Date: {fmtMY(hovStack.date)}
+          </div>
+    
+          <div>Principal: <b>{fmt$(cumulativePrincipal)}</b></div>
+          <div>Interest: <b>{fmt$(cumulativeInterest)}</b></div>
+          <div>Fees: <b>{cumulativeFees === 0 ? '-$0.00' : `-${fmt$(cumulativeFees)}`}</b></div>
+          <div>Cumulative Net: <b>{fmt$(cumulativeNet)}</b></div>
+        </Tooltip>
+      )
+    }
 
-    const interestVal =
-      activeSeries.find(s => s.loanId === 'interest')?.data.get(hovStack.ts) ?? 0
+    const breakdown = tooltipBreakdownByTs?.get(hovStack.ts)
 
-    const feesRaw =
-      activeSeries.find(s => s.loanId === 'fees')?.data.get(hovStack.ts) ?? 0
-
-    const feesVal = Math.abs(feesRaw)
-    const monthNet = principalVal + interestVal - feesVal
-
+    if (breakdown) {
+      return (
+        <Tooltip x={hovered.x} y={hovered.y}>
+          <div
+            style={{
+              fontWeight: 700,
+              fontSize: 13,
+              marginBottom: 6,
+              borderBottom: '1px solid rgba(255,255,255,0.15)',
+              paddingBottom: 6,
+            }}
+          >
+            Date: {fmtMY(hovStack.date)}
+          </div>
+    
+          <div>Principal: <b>{fmt$(breakdown.principal)}</b></div>
+          <div>Interest: <b>{fmt$(breakdown.interest)}</b></div>
+          <div>Fees: <b>{breakdown.fees === 0 ? '-$0.00' : `-${fmt$(breakdown.fees)}`}</b></div>
+          <div>Cumulative Net: <b>{fmt$(breakdown.net)}</b></div>
+        </Tooltip>
+      )
+    }
+    
+    const visibleBars = hovStack.bars.filter(b => b.val !== 0)
+    const monthNet = activeSeries.reduce((x, s) => x + (s.data.get(hovStack.ts) ?? 0), 0)
+    
     return (
       <Tooltip x={hovered.x} y={hovered.y}>
         <div
           style={{
             fontWeight: 700,
             fontSize: 13,
-            marginBottom: 6,
+            marginBottom: 4,
             borderBottom: '1px solid rgba(255,255,255,0.15)',
             paddingBottom: 6,
           }}
         >
-          Date: {fmtMY(hovStack.date)}
+          {fmtMY(hovStack.date)}
         </div>
-
-        <div>Principal: <b>{fmt$(principalVal)}</b></div>
-        <div>Interest: <b>{fmt$(interestVal)}</b></div>
-        <div>Fees: <b>{feesVal === 0 ? '-$0.00' : `-${fmt$(feesVal)}`}</b></div>
-        <div>Total Net: <b>{fmt$(monthNet)}</b></div>
-        <div>Cumulative Net: <b>{fmt$(cumulativeNet)}</b></div>
+    
+        <div
+          style={{
+            marginBottom: 6,
+            borderBottom: '1px solid rgba(255,255,255,0.12)',
+            paddingBottom: 6,
+          }}
+        >
+          <div>Month Net: <b>{fmt$(monthNet)}</b></div>
+          <div>Cumulative: <b>{fmt$(cumulativeNet)}</b></div>
+        </div>
+    
+        {!compact &&
+          visibleBars
+            .sort((a, b) => Math.abs(b.val) - Math.abs(a.val))
+            .map(bar => {
+              const s = series.find(s => s.loanId === bar.loanId)
+              const dispVal = s?.data.get(hovStack.ts) ?? bar.val
+              return (
+                <div key={bar.loanId} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      background: bar.color,
+                      borderRadius: 2,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span style={{ color: '#94a3b8', fontSize: 11, flex: 1 }}>{s?.name}</span>
+                  <span style={{ fontWeight: 600 }}>{fmt$(dispVal)}</span>
+                </div>
+              )
+            })}
       </Tooltip>
     )
-  }
-
-  const visibleBars = hovStack.bars.filter(b => b.val !== 0)
-  const monthNet = activeSeries.reduce((x, s) => x + (s.data.get(hovStack.ts) ?? 0), 0)
-
-  return (
-    <Tooltip x={hovered.x} y={hovered.y}>
-      <div
-        style={{
-          fontWeight: 700,
-          fontSize: 13,
-          marginBottom: 4,
-          borderBottom: '1px solid rgba(255,255,255,0.15)',
-          paddingBottom: 6,
-        }}
-      >
-        {fmtMY(hovStack.date)}
-      </div>
-
-      <div
-        style={{
-          marginBottom: 6,
-          borderBottom: '1px solid rgba(255,255,255,0.12)',
-          paddingBottom: 6,
-        }}
-      >
-        <div>Month Net: <b>{fmt$(monthNet)}</b></div>
-        <div>Cumulative: <b>{fmt$(cumulativeNet)}</b></div>
-      </div>
-
-      {!compact &&
-        visibleBars
-          .sort((a, b) => Math.abs(b.val) - Math.abs(a.val))
-          .map(bar => {
-            const s = series.find(s => s.loanId === bar.loanId)
-            const dispVal = s?.data.get(hovStack.ts) ?? bar.val
-            return (
-              <div key={bar.loanId} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span
-                  style={{
-                    width: 8,
-                    height: 8,
-                    background: bar.color,
-                    borderRadius: 2,
-                    flexShrink: 0,
-                  }}
-                />
-                <span style={{ color: '#94a3b8', fontSize: 11, flex: 1 }}>{s?.name}</span>
-                <span style={{ fontWeight: 600 }}>{fmt$(dispVal)}</span>
-              </div>
-            )
-          })}
-    </Tooltip>
-  )
 })()}
     </div>
   )
@@ -581,41 +611,77 @@ function LoanEarningsDrawerBody({ loan }: { loan: any }) {
     return out.sort((a, b) => a.getTime() - b.getTime())
   }, [sched])
 
-  const principalSeries: BarSeries = useMemo(() => ({
-    loanId: 'principal',
-    name: 'Principal',
-    color: '#0ea5e9',
-    data: new Map(
-      sched.map((r: any) => [
-        new Date(r.loanDate.getFullYear(), r.loanDate.getMonth(), 1).getTime(),
-        getRowMonthlyPrincipal(r),
-      ])
-    ),
-  }), [sched])
-
-  const interestSeries: BarSeries = useMemo(() => ({
-    loanId: 'interest',
-    name: 'Interest',
-    color: '#22c55e',
-    data: new Map(
-      sched.map((r: any) => [
-        new Date(r.loanDate.getFullYear(), r.loanDate.getMonth(), 1).getTime(),
-        getRowMonthlyInterest(r),
-      ])
-    ),
-  }), [sched])
-
-  const feesSeries: BarSeries = useMemo(() => ({
-    loanId: 'fees',
-    name: 'Fees',
-    color: '#ef4444',
-    data: new Map(
-      sched.map((r: any) => [
-        new Date(r.loanDate.getFullYear(), r.loanDate.getMonth(), 1).getTime(),
-        -getRowMonthlyFees(r),
-      ])
-    ),
-  }), [sched])
+  const principalSeries: BarSeries = useMemo(() => {
+    let running = 0
+    const data = new Map<number, number>()
+  
+    chartDates.forEach(d => {
+      const ts = d.getTime()
+      const row = sched.find(
+        (r: any) =>
+          r.loanDate instanceof Date &&
+          r.loanDate.getFullYear() === d.getFullYear() &&
+          r.loanDate.getMonth() === d.getMonth()
+      )
+      running += row ? getRowMonthlyPrincipal(row) : 0
+      data.set(ts, running)
+    })
+  
+    return {
+      loanId: 'principal',
+      name: 'Principal',
+      color: '#0ea5e9',
+      data,
+    }
+  }, [sched, chartDates])
+  
+  const interestSeries: BarSeries = useMemo(() => {
+    let running = 0
+    const data = new Map<number, number>()
+  
+    chartDates.forEach(d => {
+      const ts = d.getTime()
+      const row = sched.find(
+        (r: any) =>
+          r.loanDate instanceof Date &&
+          r.loanDate.getFullYear() === d.getFullYear() &&
+          r.loanDate.getMonth() === d.getMonth()
+      )
+      running += row ? getRowMonthlyInterest(row) : 0
+      data.set(ts, running)
+    })
+  
+    return {
+      loanId: 'interest',
+      name: 'Interest',
+      color: '#22c55e',
+      data,
+    }
+  }, [sched, chartDates])
+  
+  const feesSeries: BarSeries = useMemo(() => {
+    let running = 0
+    const data = new Map<number, number>()
+  
+    chartDates.forEach(d => {
+      const ts = d.getTime()
+      const row = sched.find(
+        (r: any) =>
+          r.loanDate instanceof Date &&
+          r.loanDate.getFullYear() === d.getFullYear() &&
+          r.loanDate.getMonth() === d.getMonth()
+      )
+      running += row ? getRowMonthlyFees(row) : 0
+      data.set(ts, -running)
+    })
+  
+    return {
+      loanId: 'fees',
+      name: 'Fees',
+      color: '#ef4444',
+      data,
+    }
+  }, [sched, chartDates])
 
   return (
     <>
@@ -624,7 +690,6 @@ function LoanEarningsDrawerBody({ loan }: { loan: any }) {
   series={[principalSeries, interestSeries, feesSeries]}
   dates={chartDates}
   height={240}
-  cumulative
   showTodayLine
   visibleIds={new Set(['principal', 'interest', 'fees'])}
   tooltipMode="loan-breakdown"
@@ -709,6 +774,57 @@ function KpiEarningsDrawerBody({ kpi, loansWithRoi }: { kpi: EarningsKpiKey; loa
     })
     return { loanId: id, name: loan.loanName ?? loan.name ?? id, color: loan.loanColor ?? loan.color ?? '#64748b', data }
   }), [loansWithRoi])
+
+  const cumulativeBreakdownByTs = useMemo(() => {
+    const sourceDates = kpi === 'kpi1' ? historicDates : allDates
+  
+    let runningPrincipal = 0
+    let runningInterest = 0
+    let runningFees = 0
+  
+    const out = new Map<number, {
+      principal: number
+      interest: number
+      fees: number
+      net: number
+    }>()
+  
+    sourceDates.forEach(d => {
+      const ts = d.getTime()
+  
+      let monthPrincipal = 0
+      let monthInterest = 0
+      let monthFees = 0
+  
+      loansWithRoi.forEach((loan: any) => {
+        getLoanEarningsSchedule(loan).forEach((r: any) => {
+          if (!(r.loanDate instanceof Date)) return
+          if (
+            r.loanDate.getFullYear() === d.getFullYear() &&
+            r.loanDate.getMonth() === d.getMonth()
+          ) {
+            monthPrincipal += getRowMonthlyPrincipal(r)
+            monthInterest += getRowMonthlyInterest(r)
+            monthFees += getRowMonthlyFees(r)
+          }
+        })
+      })
+  
+      runningPrincipal += monthPrincipal
+      runningInterest += monthInterest
+      runningFees += monthFees
+  
+      out.set(ts, {
+        principal: runningPrincipal,
+        interest: runningInterest,
+        fees: runningFees,
+        net: runningPrincipal + runningInterest - runningFees,
+      })
+    })
+  
+    return out
+  }, [loansWithRoi, historicDates, allDates, kpi])
+
 
   const loanTotals = useMemo(() => loansWithRoi.map((loan: any) => {
     const id  = String(loan.loanId ?? loan.id ?? '')
@@ -795,7 +911,7 @@ function KpiEarningsDrawerBody({ kpi, loansWithRoi }: { kpi: EarningsKpiKey; loa
   const cfgs = {
     kpi1: {
       stat:  [{ label: 'Net Earnings to Date', value: fmt$(totalNetToDate), flex: 2 }, { label: 'Total Fees to Date', value: fmt$(totalFeesToDate), flex: 1 }],
-      chart: <StackedBarChart series={series} dates={historicDates} height={260} cumulative visibleIds={visibleIds} focusedId={focusedId} showTodayLine compact />,
+      chart: <StackedBarChart series={series} dates={historicDates} height={260} cumulative visibleIds={visibleIds} focusedId={focusedId} showTodayLine compact tooltipBreakdownByTs={cumulativeBreakdownByTs} />,
       title: 'Total Net Earnings to Date',
       table: (
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
@@ -817,7 +933,7 @@ function KpiEarningsDrawerBody({ kpi, loansWithRoi }: { kpi: EarningsKpiKey; loa
     },
     kpi2: {
       stat:  [{ label: 'Projected Net Earnings', value: fmt$(totalProjNet), flex: 2 }, { label: 'Projected Total Fees', value: fmt$(totalProjFees), flex: 1 }],
-      chart: <StackedBarChart series={series} dates={allDates} height={260} cumulative visibleIds={visibleIds} focusedId={focusedId} showTodayLine compact />,
+      chart: <StackedBarChart series={series} dates={allDates} height={260} cumulative visibleIds={visibleIds} focusedId={focusedId} showTodayLine compact tooltipBreakdownByTs={cumulativeBreakdownByTs} />,
       title: 'Projected Total Net Earnings',
       table: (
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
