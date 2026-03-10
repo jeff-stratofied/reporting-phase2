@@ -8,7 +8,7 @@ import {
   GLOBAL_FEE_CONFIG,
   type AmortRow,
 } from './loanEngine'
-import { resolveFeeWaiverFlags } from './feePolicy.ts'
+import { resolveFeeWaiverFlags } from '../utils/feePolicy'
   
   // =====================================================
   // Types
