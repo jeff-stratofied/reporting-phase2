@@ -1,4 +1,4 @@
-import { getUserById } from './users'
+import { getUserById } from './utils/users'
 
 function normalizeFeeWaiverValue(value?: string) {
   return value || 'none'
