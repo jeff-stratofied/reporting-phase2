@@ -97,7 +97,7 @@ function LoanDrawerBody({ loan }: { loan: any }) {
 
   const origAmt = Number(loan.originalLoanAmount ?? loan.origLoanAmt ?? loan.loanAmount ?? loan.principal ?? 0)
   const rate = (() => { const r = Number(loan.nominalRate ?? 0); return r < 1 ? r * 100 : r })()
-  const purchasePrice = Number(loan.purchasePrice ?? loan.userPurchasePrice ?? 0)
+
 
   return (
     <>
